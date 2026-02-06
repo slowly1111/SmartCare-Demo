@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>家长端 - 今日动态</title>
+    <style>
+        /* --- 全局样式 --- */
+        :root {
+            --primary-color: #07c160;
+            --bg-color: #f5f7fa;
+            --text-main: #333;
+            --text-sub: #999;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-shell {
+            width: 100%;
+            max-width: 414px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background-color: var(--bg-color);
+        }
+
+        /* 1. 顶部 Header */
+        .nav-header {
+            background: #fff;
+            padding: 20px 20px 30px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .nav-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            opacity: 0.9;
+            cursor: pointer;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            margin-right: 15px;
+            background-image: url('https://api.dicebear.com/7.x/miniavs/svg?seed=1');
+            background-size: cover;
+            background-color: #eee;
+        }
+
+        .user-txt h2 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .user-txt p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.8;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+
+        /* 2. 今日时间线 (核心区域) */
+        .today-section {
+            background: #fff;
+            margin-top: -20px;
+            /* 稍微向上覆盖一点 Header，制造层级感 */
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 25px 20px 10px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-header {
+            padding: 20px 0 15px 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sec-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .sec-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #07c160;
+            border-radius: 2px;
+            margin-right: 8px;
+        }
+
+        .sec-date {
+            font-size: 13px;
+            color: #999;
+        }
+
+        /* 时间轴样式 */
+        .tl-item {
+            display: flex;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .tl-line {
+            position: absolute;
+            left: 7px;
+            top: 20px;
+            bottom: -30px;
+            width: 2px;
+            background: #f0f0f0;
+            z-index: 0;
+        }
+
+        .tl-item:last-child .tl-line {
+            display: none;
+        }
+
+        /* 最后一个节点不显示线 */
+
+        .tl-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 4px solid #07c160;
+            z-index: 1;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        /* 作业节点的点是紫色的 */
+        .tl-dot.purple {
+            border-color: #764ba2;
+        }
+
+        .tl-content {
+            margin-left: 15px;
+            flex: 1;
+        }
+
+        .tl-time {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 6px;
+            font-family: monospace;
+        }
+
+        /* 作业大卡片 */
+        .homework-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+        }
+
+        .hw-desc {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .pdf-row {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            justify-content: space-between;
+            border: 1px solid #eee;
+        }
+
+        .pdf-left {
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .pdf-icon {
+            width: 36px;
+            height: 36px;
+            background: #ff4d4f;
+            color: #fff;
+            flex-shrink: 0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .pdf-info {
+            overflow: hidden;
+        }
+
+        .pdf-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pdf-size {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .btn-download {
+            font-size: 13px;
+            background: #07c160;
+            color: #fff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        /* 老师反馈展示样式 */
+        .feedback-display {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #eee;
+        }
+
+        .feedback-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .feedback-tag {
+            padding: 4px 10px;
+            background: #e6ffeb;
+            color: #07c160;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .teacher-comment {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f5f5f5 100%);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            position: relative;
+        }
+
+        .teacher-comment::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 15px;
+            width: 12px;
+            height: 12px;
+            background: #f0f9ff;
+            transform: rotate(45deg);
+        }
+
+        .teacher-comment .label {
+            font-size: 11px;
+            color: #1890ff;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .teacher-comment .text {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+
+        /* 3. 档案列表区域 (Synced from student_profile.html) */
+        .archive-section {
+            flex: 1;
+            background: #fff;
+            padding: 0 20px;
+            margin-top: 10px;
+        }
+
+        .filter-icon {
+            color: #576b95;
+            font-size: 13px;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 4px 8px;
+            background: #f0f9ff;
+            border-radius: 4px;
+        }
+
+        /* 月份选择弹窗 */
+        .picker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 200;
+        }
+
+        .picker-overlay.show {
+            display: flex;
+        }
+
+        .picker-sheet {
+            background: #fff;
+            width: 100%;
+            max-width: 414px;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .picker-header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .month-item {
+            text-align: center;
+            padding: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .month-item.active {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .month-item.disabled {
+            color: #ccc;
+            background: #fafafa;
+        }
+
+        /* 历史记录列表 - 通用组件样式 */
+        .history-list {
+            padding-bottom: 40px;
+        }
+
+        /* 档案卡片容器 */
+        .archive-item {
+            display: flex;
+            padding: 15px;
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        /* 左侧日期 */
+        .archive-date {
+            width: 45px;
+            text-align: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            padding-top: 2px;
+        }
+
+        .date-day {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .date-month {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* 右侧内容区 */
+        .archive-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 1. 标题行 */
+        .archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .archive-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .comment-icon {
+            font-size: 16px;
+            color: #999;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .comment-icon:active {
+            color: #07c160;
+        }
+
+        /* 2. 描述行 (降级) */
+        .archive-desc {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        /* 3. 标签行 (升级) */
+        .archive-tags-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag-pill {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        /* 标签状态色 */
+        .tag-pill.good {
+            background: #f6ffed;
+            color: #52c41a;
+            border-color: #b7eb8f;
+        }
+
+        .tag-pill.fast {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-color: #91d5ff;
+        }
+
+        .tag-pill.warn {
+            background: #fffbe6;
+            color: #faad14;
+            border-color: #ffe58f;
+        }
+
+        .tag-pill.perfect {
+            background: #fff0f6;
+            color: #eb2f96;
+            border-color: #ffadd2;
+        }
+
+        /* 4. PDF 胶囊 */
+        .pdf-capsule-sm {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 6px 10px;
+            border-radius: 6px;
+            width: fit-content;
+            border: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .pdf-capsule-sm span {
+            color: #ff4d4f;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .pdf-capsule-sm:active {
+            background: #f0f0f0;
+        }
+
+        .action-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .action-sheet-overlay.show {
+            display: flex;
+        }
+
+        .action-sheet {
+            width: 100%;
+            max-width: 414px;
+            background: #f5f7fa;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            overflow: hidden;
+            animation: slideUp 0.2s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .action-item {
+            background: #fff;
+            padding: 16px;
+            text-align: center;
+            font-size: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .action-cancel {
+            background: #fff;
+            padding: 16px;
+            text-align: center;
+            font-size: 16px;
+            margin-top: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-shell">
+
+        <div class="nav-header">
+            <div class="nav-top-row">
+                <div class="nav-icon" onclick="goBack()">←</div>
+                <div class="nav-title">今日动态</div>
+                <div class="nav-icon" onclick="showSettings()">⚙️</div>
+            </div>
+            <div class="user-info">
+                <div class="avatar"></div>
+                <div class="user-txt">
+                    <h2>谭圣涵</h2>
+                    <p>一年级午托班</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="today-section">
+            <div class="section-header">
+                <div class="sec-title">今日 02-05</div>
+                <div class="sec-date">农历正月初八</div>
+            </div>
+
+            <div class="tl-item">
+                <div class="tl-line"></div>
+                <div class="tl-dot purple"></div>
+                <div class="tl-content">
+                    <div class="tl-time">18:00</div>
+                    <div class="homework-card">
+                        <div style="font-weight:bold; margin-bottom:8px; font-size:15px;">📄 作业报告已生成</div>
+                        <div class="hw-desc">数学完成3页，错题已订正；语文背诵任务已完成。</div>
+                        <div class="pdf-row">
+                            <div class="pdf-left">
+                                <div class="pdf-icon">PDF</div>
+                                <div class="pdf-info">
+                                    <div class="pdf-name">20260205_数学语文.pdf</div>
+                                    <div class="pdf-size">2.1 MB</div>
+                                </div>
+                            </div>
+                            <button class="btn-download">下载</button>
+                        </div>
+                        <!-- 老师反馈展示 -->
+                        <div class="feedback-display">
+                            <div class="feedback-tags">
+                                <span class="feedback-tag">👍 书写工整</span>
+                                <span class="feedback-tag">⚡ 速度快</span>
+                            </div>
+                            <div class="teacher-comment">
+                                <div class="label">👩‍🏫 老师留言</div>
+                                <div class="text">今天几何题做得很快，理解能力有明显进步！继续保持~</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tl-item">
+                <div class="tl-line"></div>
+                <div class="tl-dot"></div>
+                <div class="tl-content">
+                    <div class="tl-time">16:45</div>
+                    <div style="font-size:15px; color:#333; font-weight:500;">
+                        🏫 已安全入班
+                    </div>
+                    <div style="font-size:12px; color:#999; margin-top:4px;">确认进入托管教室</div>
+                </div>
+            </div>
+
+            <div class="tl-item">
+                <div class="tl-line"></div>
+                <div class="tl-dot"></div>
+                <div class="tl-content">
+                    <div class="tl-time">16:30</div>
+                    <div style="font-size:15px; color:#333; font-weight:500;">
+                        🟢 李老师已接 (校门口)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="archive-section">
+            <div class="section-header">
+                历史成长档案
+                <span class="filter-icon" onclick="showMonthPicker()">📅 按月筛选</span>
+            </div>
+
+            <div class="history-list">
+                <!-- 档案1: 有错题+评语 -->
+                <div class="archive-item">
+                    <div class="archive-date">
+                        <span class="date-day">05</span>
+                        <span class="date-month">2月</span>
+                    </div>
+                    <div class="archive-content">
+                        <div class="archive-header">
+                            <span class="archive-title">周四 · 晚托作业报告</span>
+                            <span class="comment-icon" onclick="showComment('今天理解能力有很大进步，继续保持！')">💬</span>
+                        </div>
+                        <div class="archive-desc">数学3页 · 语文2页</div>
+                        <div class="archive-tags-row">
+                            <span class="tag-pill good">👍 书写工整</span>
+                            <span class="tag-pill fast">⚡ 速度快</span>
+                        </div>
+                        <div class="pdf-capsule-sm" onclick="previewPDF('20260205')">
+                            <span>PDF</span> 20260205_错题集.pdf
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 档案2: 有错题+无评语 -->
+                <div class="archive-item">
+                    <div class="archive-date">
+                        <span class="date-day">04</span>
+                        <span class="date-month">2月</span>
+                    </div>
+                    <div class="archive-content">
+                        <div class="archive-header">
+                            <span class="archive-title">周三 · 晚托作业报告</span>
+                        </div>
+                        <div class="archive-desc">英语1页</div>
+                        <div class="archive-tags-row">
+                            <span class="tag-pill warn">🐢 有点拖拉</span>
+                        </div>
+                        <div class="pdf-capsule-sm" onclick="previewPDF('20260204')">
+                            <span>PDF</span> 20260204_错题集.pdf
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 档案3: 今日全对 -->
+                <div class="archive-item">
+                    <div class="archive-date">
+                        <span class="date-day">03</span>
+                        <span class="date-month">2月</span>
+                    </div>
+                    <div class="archive-content">
+                        <div class="archive-header">
+                            <span class="archive-title">周二 · 晚托作业报告</span>
+                            <span class="comment-icon" onclick="showComment('今日全对，非常棒！')">💬</span>
+                        </div>
+                        <div class="archive-desc">今日表现优秀，无错题归档</div>
+                        <div class="archive-tags-row">
+                            <span class="tag-pill perfect">🎉 今日全对</span>
+                            <span class="tag-pill good">🧠 思路清晰</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; color:#ccc; font-size:12px; margin-top:20px;">- 没有更多了 -</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Month Picker -->
+    <div class="picker-overlay" id="monthPicker">
+        <div class="picker-sheet">
+            <div class="picker-header">选择月份</div>
+            <div class="month-grid">
+                <div class="month-item" onclick="selectMonth(1)">1月</div>
+                <div class="month-item active" onclick="selectMonth(2)">2月</div>
+                <div class="month-item disabled">3月</div>
+                <div class="month-item disabled">4月</div>
+                <div class="month-item disabled">5月</div>
+                <div class="month-item disabled">6月</div>
+            </div>
+            <button class="action-cancel" style="width:100%; margin-top:0;" onclick="closeMonthPicker()">取消</button>
+        </div>
+    </div>
+
+    <!-- Settings Action Sheet -->
+    <div class="action-sheet-overlay" id="settingsModal" onclick="closeSettings(event)">
+        <div class="action-sheet">
+            <div class="action-item" onclick="contactTeacher()">📞 联系老师</div>
+            <div class="action-item" onclick="logout()" style="color:#ff4d4f;">退出登录</div>
+            <div class="action-cancel" onclick="closeSettings(null, true)">取消</div>
+        </div>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = 'demo-nav.html';
+        }
+
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+        }
+
+        function closeSettings(e, force) {
+            if (force || e.target.id === 'settingsModal') {
+                document.getElementById('settingsModal').classList.remove('show');
+            }
+        }
+
+        function contactTeacher() {
+            if (confirm('确定要拨打班主任电话吗？')) {
+                window.location.href = 'tel:13800000000';
+            }
+        }
+
+        function logout() {
+            if (confirm('确定要退出当前账号吗？')) {
+                alert('已退出登录');
+                window.location.href = 'parent-login.html';
+            }
+        }
+
+        // 查看老师评语
+        function showComment(text) {
+            alert('👩‍🏫 老师评语：\n\n' + text);
+        }
+
+        // 预览PDF
+        function previewPDF(fileId) {
+            alert('正在打开: ' + fileId + '_错题集.pdf');
+        }
+
+        function showMonthPicker() {
+            document.getElementById('monthPicker').classList.add('show');
+        }
+
+        function closeMonthPicker() {
+            document.getElementById('monthPicker').classList.remove('show');
+        }
+
+        function selectMonth(m) {
+            if (m > 2) return;
+            document.querySelectorAll('.month-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            setTimeout(() => {
+                closeMonthPicker();
+                alert(`已筛选 ${m} 月份的档案`);
+            }, 300);
+        }
+    </script>
+
+</body>
+
+</html>

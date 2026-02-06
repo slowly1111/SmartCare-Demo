@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>托管助手 - 管理设置</title>
+    <style>
+        /* --- 全局样式 --- */
+        :root {
+            --primary-color: #07c160;
+            --danger-color: #ff4d4f;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-sub: #999;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-shell {
+            width: 100%;
+            max-width: 414px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+        }
+
+        /* --- 顶部导航 --- */
+        .nav-header {
+            background: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .back-btn:active {
+            background: #eee;
+        }
+
+        .nav-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* --- 设置分组 --- */
+        .settings-group {
+            margin: 16px;
+        }
+
+        .group-title {
+            font-size: 13px;
+            color: var(--text-sub);
+            padding: 0 4px 8px;
+            font-weight: 500;
+        }
+
+        .settings-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .settings-item:not(:last-child) {
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .settings-item:active {
+            background: #fafafa;
+        }
+
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .icon-blue {
+            background: #e6f7ff;
+        }
+
+        .icon-green {
+            background: #f6ffed;
+        }
+
+        .icon-orange {
+            background: #fff7e6;
+        }
+
+        .icon-purple {
+            background: #f9f0ff;
+        }
+
+        .icon-red {
+            background: #fff1f0;
+        }
+
+        .item-text {
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .item-desc {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .item-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-value {
+            font-size: 14px;
+            color: var(--text-sub);
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .arrow {
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        /* --- 班级列表 --- */
+        .class-list {
+            margin: 16px;
+        }
+
+        .class-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px 12px;
+        }
+
+        .class-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .add-btn {
+            font-size: 13px;
+            color: var(--primary-color);
+            background: rgba(7, 193, 96, 0.1);
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+        }
+
+        .add-btn:active {
+            background: rgba(7, 193, 96, 0.2);
+        }
+
+        .class-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .class-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+        }
+
+        .class-item:not(:last-child) {
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .class-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .class-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .class-name {
+            font-size: 15px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .class-count {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .class-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-edit {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .btn-delete {
+            background: #fff1f0;
+            color: #ff4d4f;
+        }
+
+        .action-btn:active {
+            opacity: 0.7;
+        }
+
+        /* --- 弹窗 --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: #fff;
+            width: 90%;
+            max-width: 360px;
+            border-radius: 16px;
+            padding: 24px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 15px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-save {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: #fff;
+        }
+
+        /* --- 用户卡片 --- */
+        .user-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 16px;
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
+            background-size: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-role {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        .edit-avatar-btn {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .edit-avatar-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- 退出登录 --- */
+        .logout-section {
+            margin: 24px 16px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 14px;
+            background: #fff;
+            color: var(--danger-color);
+            border: 1px solid #ffccc7;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .logout-btn:active {
+            background: #fff1f0;
+        }
+
+        /* --- 底部版本 --- */
+        .version-info {
+            text-align: center;
+            padding: 20px;
+            color: #ccc;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-shell">
+
+        <div class="nav-header">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="nav-title">⚙️ 管理设置</div>
+        </div>
+
+        <!-- 用户信息卡片 -->
+        <div class="user-card">
+            <div class="user-avatar"></div>
+            <div class="user-info">
+                <div class="user-name">李老师</div>
+                <div class="user-role">阳光贝贝托管中心 · 管理员</div>
+            </div>
+            <div class="edit-avatar-btn" onclick="editProfile()">编辑</div>
+        </div>
+
+        <!-- 班级管理 -->
+        <div class="class-list">
+            <div class="class-header">
+                <span class="class-title">🏫 班级管理</span>
+                <span class="add-btn" onclick="openClassModal('create')">+ 新建班级</span>
+            </div>
+            <div class="class-card" id="classList">
+                <!-- 动态生成 -->
+            </div>
+        </div>
+
+        <!-- 机构信息设置 -->
+        <div class="settings-group">
+            <div class="group-title">机构信息</div>
+            <div class="settings-card">
+                <div class="settings-item" onclick="editOrgName()">
+                    <div class="item-left">
+                        <div class="item-icon icon-blue">🏢</div>
+                        <div>
+                            <div class="item-text">机构名称</div>
+                            <div class="item-desc">用于PDF报告页眉展示</div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-value" id="orgNameDisplay">阳光贝贝托管中心</span>
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+                <div class="settings-item" onclick="editOrgLogo()">
+                    <div class="item-left">
+                        <div class="item-icon icon-purple">🖼️</div>
+                        <div>
+                            <div class="item-text">机构Logo</div>
+                            <div class="item-desc">自定义品牌标识</div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-value">未设置</span>
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 其他设置 -->
+        <div class="settings-group">
+            <div class="group-title">其他设置</div>
+            <div class="settings-card">
+                <div class="settings-item" onclick="showAbout()">
+                    <div class="item-left">
+                        <div class="item-icon icon-green">📱</div>
+                        <div class="item-text">关于我们</div>
+                    </div>
+                    <div class="item-right">
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+                <div class="settings-item" onclick="showHelp()">
+                    <div class="item-left">
+                        <div class="item-icon icon-orange">❓</div>
+                        <div class="item-text">帮助与反馈</div>
+                    </div>
+                    <div class="item-right">
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 退出登录 -->
+        <div class="logout-section">
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+
+        <div class="version-info">
+            托管助手 v1.0.0<br>
+            © 2026 SmartCare
+        </div>
+
+    </div>
+
+    <!-- 班级编辑弹窗 -->
+    <div class="modal-overlay" id="classModal">
+        <div class="modal">
+            <h3 class="modal-title" id="classModalTitle">➕ 新建班级</h3>
+
+            <div class="form-group">
+                <label class="form-label">班级名称 <span style="color:#cf1322;">*</span></label>
+                <input type="text" class="form-input" id="className" placeholder="如：一年级午托班">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">托管类型</label>
+                <select class="form-input" id="classType">
+                    <option value="午托">午托</option>
+                    <option value="晚托">晚托</option>
+                    <option value="全托">全托</option>
+                    <option value="兴趣班">兴趣班</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">上课时间</label>
+                <input type="text" class="form-input" id="classTime" placeholder="如：周一至周五 11:30-14:00">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeClassModal()">取消</button>
+                <button class="btn btn-save" id="classSubmitBtn" onclick="submitClass()">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 机构名称编辑弹窗 -->
+    <div class="modal-overlay" id="orgModal">
+        <div class="modal">
+            <h3 class="modal-title">🏢 编辑机构名称</h3>
+
+            <div class="form-group">
+                <label class="form-label">机构名称</label>
+                <input type="text" class="form-input" id="orgNameInput" placeholder="请输入机构名称">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" style="color: #999; font-size: 12px;">
+                    💡 机构名称将显示在生成的作业PDF页眉上，提升品牌辨识度
+                </label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeOrgModal()">取消</button>
+                <button class="btn btn-save" onclick="saveOrgName()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3 class="modal-title">⚠️ 确认删除</h3>
+            <p style="color: #666; font-size: 14px; margin: 0 0 20px;">
+                确定要删除班级 "<span id="deleteClassName"></span>" 吗？<br>
+                <span style="color: #ff4d4f;">此操作不可恢复！</span>
+            </p>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟班级数据
+        let classData = [
+            { id: 'class_001', name: '一年级午托精选班', type: '午托', time: '11:30-14:00', count: 20, color: '#fff7e6' },
+            { id: 'class_002', name: '三年级作业辅导班', type: '晚托', time: '16:30-20:00', count: 15, color: '#e6f7ff' },
+            { id: 'class_003', name: '周五书法兴趣班', type: '兴趣班', time: '周五 15:30', count: 8, color: '#f9f0ff' }
+        ];
+
+        // 机构名称
+        let orgName = '阳光贝贝托管中心';
+
+        // 当前编辑的班级
+        let editingClassId = null;
+        let deletingClassId = null;
+
+        // 渲染班级列表
+        function renderClassList() {
+            const container = document.getElementById('classList');
+            container.innerHTML = classData.map(item => `
+                <div class="class-item">
+                    <div class="class-info">
+                        <div class="class-icon" style="background: ${item.color};">🎓</div>
+                        <div>
+                            <div class="class-name">${item.name}</div>
+                            <div class="class-count">${item.type} · ${item.count}人</div>
+                        </div>
+                    </div>
+                    <div class="class-actions">
+                        <div class="action-btn btn-edit" onclick="openClassModal('edit', '${item.id}')">✏️</div>
+                        <div class="action-btn btn-delete" onclick="openDeleteModal('${item.id}')">🗑️</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 打开班级弹窗
+        function openClassModal(mode, classId = null) {
+            const modal = document.getElementById('classModal');
+            const title = document.getElementById('classModalTitle');
+            const submitBtn = document.getElementById('classSubmitBtn');
+
+            // 重置表单
+            document.getElementById('className').value = '';
+            document.getElementById('classType').selectedIndex = 0;
+            document.getElementById('classTime').value = '';
+
+            if (mode === 'edit' && classId) {
+                editingClassId = classId;
+                const classItem = classData.find(c => c.id === classId);
+                if (classItem) {
+                    title.innerHTML = '✏️ 编辑班级';
+                    submitBtn.textContent = '保存修改';
+                    document.getElementById('className').value = classItem.name;
+                    document.getElementById('classType').value = classItem.type;
+                    document.getElementById('classTime').value = classItem.time;
+                }
+            } else {
+                editingClassId = null;
+                title.innerHTML = '➕ 新建班级';
+                submitBtn.textContent = '确认创建';
+            }
+
+            modal.classList.add('show');
+        }
+
+        // 关闭班级弹窗
+        function closeClassModal() {
+            document.getElementById('classModal').classList.remove('show');
+        }
+
+        // 提交班级
+        function submitClass() {
+            const name = document.getElementById('className').value.trim();
+            const type = document.getElementById('classType').value;
+            const time = document.getElementById('classTime').value.trim();
+
+            if (!name) {
+                alert('请输入班级名称');
+                return;
+            }
+
+            if (editingClassId) {
+                // 编辑模式
+                const index = classData.findIndex(c => c.id === editingClassId);
+                if (index !== -1) {
+                    classData[index].name = name;
+                    classData[index].type = type;
+                    classData[index].time = time;
+                }
+                alert(`✅ 班级 "${name}" 已更新！`);
+            } else {
+                // 新建模式
+                const colors = ['#fff7e6', '#e6f7ff', '#f9f0ff', '#f6ffed', '#fff1f0'];
+                classData.push({
+                    id: 'class_' + Date.now(),
+                    name,
+                    type,
+                    time,
+                    count: 0,
+                    color: colors[classData.length % colors.length]
+                });
+                alert(`✅ 班级 "${name}" 创建成功！`);
+            }
+
+            renderClassList();
+            closeClassModal();
+        }
+
+        // 打开删除确认弹窗
+        function openDeleteModal(classId) {
+            deletingClassId = classId;
+            const classItem = classData.find(c => c.id === classId);
+            document.getElementById('deleteClassName').textContent = classItem ? classItem.name : '';
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        // 关闭删除弹窗
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deletingClassId = null;
+        }
+
+        // 确认删除
+        function confirmDelete() {
+            if (deletingClassId) {
+                const classItem = classData.find(c => c.id === deletingClassId);
+                classData = classData.filter(c => c.id !== deletingClassId);
+                renderClassList();
+                alert(`🗑️ 班级 "${classItem.name}" 已删除`);
+            }
+            closeDeleteModal();
+        }
+
+        // 编辑机构名称
+        function editOrgName() {
+            document.getElementById('orgNameInput').value = orgName;
+            document.getElementById('orgModal').classList.add('show');
+        }
+
+        // 关闭机构名称弹窗
+        function closeOrgModal() {
+            document.getElementById('orgModal').classList.remove('show');
+        }
+
+        // 保存机构名称
+        function saveOrgName() {
+            const newName = document.getElementById('orgNameInput').value.trim();
+            if (newName) {
+                orgName = newName;
+                document.getElementById('orgNameDisplay').textContent = orgName;
+                alert(`✅ 机构名称已更新为 "${orgName}"`);
+            }
+            closeOrgModal();
+        }
+
+        // 编辑Logo
+        function editOrgLogo() {
+            alert('📷 上传Logo功能开发中...\n(Demo演示)');
+        }
+
+        // 编辑个人资料
+        function editProfile() {
+            alert('👤 个人资料编辑功能开发中...\n(Demo演示)');
+        }
+
+        // 关于我们
+        function showAbout() {
+            alert('📱 托管助手 v1.0.0\n\n专为托管机构打造的智能管理助手\n\n© 2026 SmartCare');
+        }
+
+        // 帮助与反馈
+        function showHelp() {
+            alert('❓ 如有问题，请联系客服\n\n📞 400-xxx-xxxx\n📧 support@smartcare.com');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                alert('👋 已安全退出登录');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 返回上一页
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // 点击遮罩层关闭弹窗
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // 初始化
+        renderClassList();
+    </script>
+
+</body>
+
+</html>

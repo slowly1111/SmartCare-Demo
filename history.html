@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>托管助手 - 历史记录</title>
+    <style>
+        /* --- 全局样式 --- */
+        :root {
+            --primary-color: #07c160;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-sub: #999;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-shell {
+            width: 100%;
+            max-width: 414px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+        }
+
+        /* --- 顶部导航 --- */
+        .nav-header {
+            background: #fff;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .back-btn:active {
+            background: #eee;
+        }
+
+        .nav-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* --- 筛选器区域 --- */
+        .filter-section {
+            background: #fff;
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .filter-item {
+            flex: 1;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* --- 统计概览卡片 --- */
+        .stats-card {
+            background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+            margin: 16px;
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .stats-title {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        /* --- 日期列表 --- */
+        .date-list {
+            padding: 0 16px 100px;
+        }
+
+        .history-item {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .history-item:active {
+            transform: scale(0.98);
+        }
+
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .date-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #e6f7ff;
+            color: #1890ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .date-box .day {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .date-box .week {
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        .info-box {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .class-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .full-date {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 2px;
+        }
+
+        .arrow {
+            color: #ccc;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* --- 数据行 (核心样式) --- */
+        .data-row {
+            background: #f9f9f9;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .att-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #666;
+            flex-wrap: wrap;
+        }
+
+        .att-item {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .lbl {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .val {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .val.green {
+            color: #07c160;
+        }
+
+        .val.red {
+            color: #ff4d4f;
+        }
+
+        .val.orange {
+            color: #faad14;
+        }
+
+        .split {
+            color: #ddd;
+            margin: 0 3px;
+        }
+
+        .work-group {
+            color: #2f54eb;
+            font-weight: 500;
+            background: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #e0eaff;
+            white-space: nowrap;
+        }
+
+        /* --- 详情弹窗 --- */
+        .detail-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .detail-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .detail-drawer {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: 100%;
+            max-width: 414px;
+            max-height: 85vh;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            z-index: 201;
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+        .detail-overlay.show .detail-drawer {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .detail-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 12px auto;
+        }
+
+        .detail-header {
+            padding: 0 20px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .detail-subtitle {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .detail-content {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+        }
+
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        /* --- 考勤区块 (方案B: 抬头强化版) --- */
+        .attendance-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .att-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .att-title {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .att-title .icon {
+            margin-right: 6px;
+        }
+
+        .att-total {
+            font-size: 24px;
+            font-weight: 800;
+            color: #333;
+        }
+
+        .att-total .unit {
+            font-size: 14px;
+            font-weight: normal;
+            color: #999;
+            margin-left: 2px;
+        }
+
+        .status-grid {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .status-card {
+            flex: 1;
+            padding: 14px 0;
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        .green-bg {
+            background: #f6ffed;
+        }
+
+        .yellow-bg {
+            background: #fffbe6;
+        }
+
+        .red-bg {
+            background: #fff1f0;
+        }
+
+        .status-card .num {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .num.green {
+            color: #52c41a;
+        }
+
+        .num.yellow {
+            color: #faad14;
+        }
+
+        .num.red {
+            color: #f5222d;
+        }
+
+        .status-card .lbl {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .exception-list {
+            font-size: 13px;
+            color: #666;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .exc-item {
+            padding: 2px 0;
+        }
+
+        /* --- 作业概览 --- */
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .homework-summary {
+            background: #f0f9ff;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .homework-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+        }
+
+        .homework-row:not(:last-child) {
+            border-bottom: 1px dashed #d9ecff;
+        }
+
+        .homework-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .homework-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 14px;
+        }
+
+        .export-btn:active {
+            background: #06ad56;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-shell">
+
+        <div class="nav-header">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="nav-title">📅 历史记录</div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-item">
+                <div class="filter-label">选择月份</div>
+                <select class="filter-select" id="monthFilter" onchange="filterRecords()">
+                    <option value="2026-02">2026年2月</option>
+                    <option value="2026-01">2026年1月</option>
+                    <option value="2025-12">2025年12月</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <div class="filter-label">筛选班级</div>
+                <select class="filter-select" id="classFilter" onchange="filterRecords()">
+                    <option value="all">全部班级</option>
+                    <option value="class_001">一年级午托精选班</option>
+                    <option value="class_002">三年级作业辅导班</option>
+                    <option value="class_003">周五书法兴趣班</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 本月统计概览 -->
+        <div class="stats-card">
+            <div class="stats-title">📊 2026年2月 统计概览</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">上课天数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">96%</div>
+                    <div class="stat-label">平均出勤率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">43</div>
+                    <div class="stat-label">PDF报告</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日期列表 -->
+        <div class="date-list" id="dateList">
+            <!-- 动态生成 -->
+        </div>
+
+    </div>
+
+    <!-- 详情抽屉弹窗 -->
+    <div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+        <div class="detail-drawer">
+            <div class="detail-handle"></div>
+            <div class="detail-header">
+                <div class="detail-title" id="detailTitle">2026年02月05日</div>
+                <div class="detail-subtitle" id="detailSubtitle">周三 · 一年级午托精选班</div>
+            </div>
+            <div class="detail-content">
+                <!-- 考勤概览 (方案B: 抬头强化版) -->
+                <div class="attendance-section">
+                    <div class="att-header">
+                        <div class="att-title">
+                            <span class="icon">👥</span>
+                            <span class="text">应到全员</span>
+                        </div>
+                        <div class="att-total" id="totalCount">20 <span class="unit">人</span></div>
+                    </div>
+
+                    <div class="status-grid">
+                        <div class="status-card green-bg">
+                            <div class="num green" id="presentCount">19</div>
+                            <div class="lbl">实到</div>
+                        </div>
+                        <div class="status-card yellow-bg">
+                            <div class="num yellow" id="absentCount">1</div>
+                            <div class="lbl">请假</div>
+                        </div>
+                        <div class="status-card red-bg">
+                            <div class="num red" id="leaveCount">0</div>
+                            <div class="lbl">缺勤</div>
+                        </div>
+                    </div>
+
+                    <div class="exception-list" id="exceptionList">
+                        <div class="exc-item">📌 请假: 赵铁柱 (感冒发烧)</div>
+                    </div>
+                </div>
+
+                <!-- 作业概览 -->
+                <div class="detail-section">
+                    <div class="section-title">📝 作业概览</div>
+                    <div class="homework-summary">
+                        <div class="homework-row">
+                            <span class="homework-label">生成PDF数量</span>
+                            <span class="homework-value" id="pdfCount">19 份</span>
+                        </div>
+                        <div class="homework-row">
+                            <span class="homework-label">已发送家长</span>
+                            <span class="homework-value" id="sentCount">19 份</span>
+                        </div>
+                        <div class="homework-row">
+                            <span class="homework-label">存储空间占用</span>
+                            <span class="homework-value">12.3 MB</span>
+                        </div>
+                    </div>
+                    <button class="export-btn" onclick="exportPDFs()">📤 批量导出/转发本日PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟历史记录数据 (增加 total 应到人数字段)
+        const historyData = [
+            {
+                date: '2026-02-05',
+                weekday: '周三',
+                day: '05',
+                className: '一年级午托精选班',
+                total: 20,      // 应到人数 (快照)
+                present: 19,    // 实到
+                absent: 1,      // 请假
+                // 缺勤 = total - present - absent (计算得出)
+                pdfCount: 19,
+                leaveNote: '赵铁柱 (感冒发烧)'
+            },
+            {
+                date: '2026-02-04',
+                weekday: '周二',
+                day: '04',
+                className: '一年级午托精选班',
+                total: 20,
+                present: 20,
+                absent: 0,
+                pdfCount: 20,
+                leaveNote: ''
+            },
+            {
+                date: '2026-02-03',
+                weekday: '周一',
+                day: '03',
+                className: '三年级作业辅导班',
+                total: 15,
+                present: 14,
+                absent: 1,
+                pdfCount: 14,
+                leaveNote: '李小明 (外出旅游)'
+            },
+            {
+                date: '2026-02-02',
+                weekday: '周日',
+                day: '02',
+                className: '周五书法兴趣班',
+                total: 8,
+                present: 8,
+                absent: 0,
+                pdfCount: 8,
+                leaveNote: ''
+            },
+            {
+                date: '2026-02-01',
+                weekday: '周六',
+                day: '01',
+                className: '一年级午托精选班',
+                total: 20,
+                present: 18,
+                absent: 2,
+                pdfCount: 18,
+                leaveNote: '张三、王五 (家长请假)'
+            }
+        ];
+
+        // 渲染日期列表 (完整文案版)
+        function renderDateList() {
+            const container = document.getElementById('dateList');
+            container.innerHTML = historyData.map((item, index) => {
+                // 计算缺勤人数
+                const missing = item.total - item.present - item.absent;
+
+                return `
+                <div class="history-item" onclick="showDetail(${index})">
+                    <div class="item-header">
+                        <div class="date-box">
+                            <span class="day">${item.day}</span>
+                            <span class="week">${item.weekday}</span>
+                        </div>
+                        <div class="info-box">
+                            <div class="class-name">${item.className}</div>
+                            <div class="full-date">${item.date}</div>
+                        </div>
+                        <div class="arrow">›</div>
+                    </div>
+                    
+                    <div class="data-row">
+                        <div class="att-group">
+                            <span class="att-item"><span class="lbl">应到</span><span class="val">${item.total}</span></span>
+                            <span class="split">|</span>
+                            <span class="att-item"><span class="lbl">实到</span><span class="val green">${item.present}</span></span>
+                            <span class="att-item"><span class="lbl">请假</span><span class="val ${item.absent > 0 ? 'orange' : ''}">${item.absent}</span></span>
+                            ${missing > 0 ? `<span class="att-item"><span class="lbl">缺勤</span><span class="val red">${missing}</span></span>` : ''}
+                        </div>
+                        
+                        <div class="work-group">
+                            📄 PDF ${item.pdfCount}
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // 显示详情弹窗
+        function showDetail(index) {
+            const item = historyData[index];
+
+            // 计算缺勤
+            const missing = item.total - item.present - item.absent;
+
+            // 格式化日期标题
+            const dateTitle = item.date.replace(/-/g, '年').replace(/年(\d{2})$/, '月$1日');
+
+            document.getElementById('detailTitle').textContent = dateTitle;
+            document.getElementById('detailSubtitle').textContent = `${item.weekday} · ${item.className}`;
+            document.getElementById('totalCount').innerHTML = `${item.total} <span class="unit">人</span>`;
+            document.getElementById('presentCount').textContent = item.present;
+            document.getElementById('absentCount').textContent = item.absent;
+            document.getElementById('leaveCount').textContent = missing;
+            document.getElementById('pdfCount').textContent = item.pdfCount + ' 份';
+            document.getElementById('sentCount').textContent = item.pdfCount + ' 份';
+
+            // 异常列表（请假信息）
+            const exceptionList = document.getElementById('exceptionList');
+            if (item.leaveNote) {
+                exceptionList.innerHTML = `<div class="exc-item">📌 请假: ${item.leaveNote}</div>`;
+                exceptionList.style.display = 'block';
+            } else {
+                exceptionList.style.display = 'none';
+            }
+
+            document.getElementById('detailOverlay').classList.add('show');
+        }
+
+        // 关闭详情弹窗
+        function closeDetail(event) {
+            if (event.target.id === 'detailOverlay') {
+                document.getElementById('detailOverlay').classList.remove('show');
+            }
+        }
+
+        // 筛选记录
+        function filterRecords() {
+            // TODO: 根据月份和班级筛选数据
+            console.log('筛选:', {
+                month: document.getElementById('monthFilter').value,
+                class: document.getElementById('classFilter').value
+            });
+        }
+
+        // 导出PDF
+        function exportPDFs() {
+            alert('📤 正在打包导出本日PDF...\n(Demo演示，实际会触发下载)');
+        }
+
+        // 返回上一页
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // 初始化
+        renderDateList();
+    </script>
+
+</body>
+
+</html>

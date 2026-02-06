@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>拍作业 - 连拍模式</title>
+    <style>
+        /* --- 全局样式 --- */
+        :root {
+            --primary-color: #07c160;
+            --bg-color: #000;
+            --text-main: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #app-shell {
+            width: 100%;
+            max-width: 414px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            z-index: 20;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+        }
+
+        .back-btn {
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .stu-name-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-placeholder {
+            width: 34px;
+        }
+
+        /* 相机预览区 (模拟) */
+        .camera-preview {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .camera-placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .camera-placeholder .icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .camera-placeholder p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* 取景框 */
+        .viewfinder {
+            position: absolute;
+            top: 15%;
+            left: 10%;
+            right: 10%;
+            bottom: 30%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+        }
+
+        .viewfinder-corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--primary-color);
+        }
+
+        .corner-tl {
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
+            border-radius: 8px 0 0 0;
+        }
+
+        .corner-tr {
+            top: -2px;
+            right: -2px;
+            border-left: none;
+            border-bottom: none;
+            border-radius: 0 8px 0 0;
+        }
+
+        .corner-bl {
+            bottom: -2px;
+            left: -2px;
+            border-right: none;
+            border-top: none;
+            border-radius: 0 0 0 8px;
+        }
+
+        .corner-br {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
+            border-radius: 0 0 8px 0;
+        }
+
+        /* 底部控制区 */
+        .bottom-controls {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px 15px 35px 15px;
+        }
+
+        /* 科目选择条 */
+        .subject-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .subject-tab {
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .subject-tab.active {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        /* 缩略图预览条 */
+        .preview-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 50px;
+            margin-bottom: 15px;
+            padding: 0 10px;
+        }
+
+        .preview-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .preview-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-empty {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 12px;
+        }
+
+        /* ========== 双通道操作栏 (核心) ========== */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+        }
+
+        /* 左侧：今日全对按钮 (金色) */
+        .btn-perfect {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 12px;
+            transition: all 0.2s;
+            min-width: 65px;
+        }
+
+        .btn-perfect:active {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .btn-perfect .emoji {
+            font-size: 26px;
+            margin-bottom: 4px;
+        }
+
+        .btn-perfect .txt {
+            font-size: 11px;
+            color: #ffd700;
+            font-weight: 500;
+        }
+
+        /* 中间：快门按钮 */
+        .shutter-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #fff;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .shutter-btn:active {
+            transform: scale(0.9);
+        }
+
+        .shutter-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        /* 右侧：提交按钮 */
+        .btn-submit {
+            background: #333;
+            color: #666;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: not-allowed;
+            transition: all 0.2s;
+            border: none;
+            min-width: 75px;
+            text-align: center;
+        }
+
+        .btn-submit.active {
+            background: var(--primary-color);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(7, 193, 96, 0.4);
+        }
+
+        /* Toast 提示 */
+        #toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 9999;
+            display: none;
+        }
+
+        /* 拍照闪光动画 */
+        .flash-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .flash-effect.flash {
+            animation: flashAnim 0.15s ease-out;
+        }
+
+        @keyframes flashAnim {
+            0% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* ========== 归档弹窗样式 ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .archive-modal {
+            background: #fff;
+            width: 90%;
+            max-width: 360px;
+            border-radius: 16px;
+            overflow: hidden;
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header.normal {
+            background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+            color: #fff;
+        }
+
+        .modal-header.perfect {
+            background: linear-gradient(135deg, #faad14 0%, #ffc53d 100%);
+            color: #fff;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* 反馈模块 */
+        .feedback-section {
+            margin-bottom: 18px;
+        }
+
+        .feedback-section label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        /* 表现标签 */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-item {
+            padding: 6px 12px;
+            background: #f5f5f5;
+            color: #666;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tag-item:active {
+            transform: scale(0.95);
+        }
+
+        .tag-item.active {
+            background: #e6ffeb;
+            color: #07c160;
+            border-color: #07c160;
+            font-weight: bold;
+        }
+
+        /* 老师留言框 */
+        .comment-input {
+            width: 100%;
+            height: 70px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: #07c160;
+        }
+
+        .comment-input::placeholder {
+            color: #bbb;
+        }
+
+        /* 文件信息 */
+        .file-info {
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-info.normal {
+            background: #f0f9ff;
+            border: 1px solid #d9ecff;
+            color: #1890ff;
+        }
+
+        .file-info.perfect {
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            color: #faad14;
+        }
+
+        .file-info .icon {
+            font-size: 18px;
+        }
+
+        /* 确认按钮 */
+        .modal-confirm-btn {
+            width: 100%;
+            padding: 14px;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-confirm-btn.normal {
+            background: var(--primary-color);
+        }
+
+        .modal-confirm-btn.perfect {
+            background: #faad14;
+        }
+
+        .modal-confirm-btn:active {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-shell">
+
+        <div id="toast">提示信息</div>
+        <div class="flash-effect" id="flash"></div>
+
+        <div class="navbar">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="stu-name-badge" id="stuName">为 谭圣涵 拍摄</div>
+            <div class="nav-placeholder"></div>
+        </div>
+
+        <div class="camera-preview">
+            <div class="camera-placeholder">
+                <div class="icon">📷</div>
+                <p>将作业放到取景框内拍摄</p>
+            </div>
+
+            <div class="viewfinder">
+                <div class="viewfinder-corner corner-tl"></div>
+                <div class="viewfinder-corner corner-tr"></div>
+                <div class="viewfinder-corner corner-bl"></div>
+                <div class="viewfinder-corner corner-br"></div>
+            </div>
+        </div>
+
+        <div class="bottom-controls">
+            <!-- 科目选择 -->
+            <div class="subject-tabs">
+                <div class="subject-tab active" data-subject="数学" onclick="selectSubject(this)">数学</div>
+                <div class="subject-tab" data-subject="语文" onclick="selectSubject(this)">语文</div>
+                <div class="subject-tab" data-subject="英语" onclick="selectSubject(this)">英语</div>
+            </div>
+
+            <!-- 缩略图预览条 -->
+            <div class="preview-bar" id="previewBar">
+                <span class="preview-empty">📷 点击快门拍摄错题</span>
+            </div>
+
+            <!-- ========== 双通道操作栏 ========== -->
+            <div class="action-bar">
+                <!-- 左侧：今日全对 (金色按钮) -->
+                <div class="btn-perfect" onclick="openArchiveModal('perfect')">
+                    <span class="emoji">🎉</span>
+                    <span class="txt">今日全对</span>
+                </div>
+
+                <!-- 中间：快门按钮 -->
+                <div class="shutter-btn" onclick="takePhoto()"></div>
+
+                <!-- 右侧：提交按钮 -->
+                <button class="btn-submit" id="submitBtn" onclick="openArchiveModal('normal')">
+                    提交 (<span id="photoCount">0</span>)
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========== 归档确认弹窗 ========== -->
+    <div class="modal-overlay" id="archiveModal" onclick="closeModalOnOverlay(event)">
+        <div class="archive-modal">
+            <div class="modal-header" id="modalHeader">
+                <h3 id="modalTitle">📦 确认归档</h3>
+                <span class="modal-close" onclick="closeArchiveModal()">×</span>
+            </div>
+
+            <div class="modal-body">
+                <!-- 今日表现标签 -->
+                <div class="feedback-section">
+                    <label>🏷️ 今日表现 (点选)</label>
+                    <div class="tags-container" id="tagsContainer">
+                        <div class="tag-item" onclick="toggleTag(this)" data-tag="书写工整">👍 书写工整</div>
+                        <div class="tag-item" onclick="toggleTag(this)" data-tag="速度快">⚡ 速度快</div>
+                        <div class="tag-item" onclick="toggleTag(this)" data-tag="思路清晰">🧠 思路清晰</div>
+                        <div class="tag-item" onclick="toggleTag(this)" data-tag="有点拖拉">🐢 有点拖拉</div>
+                        <div class="tag-item" onclick="toggleTag(this)" data-tag="需要鼓励">💪 需要鼓励</div>
+                    </div>
+                </div>
+
+                <!-- 老师留言 -->
+                <div class="feedback-section">
+                    <label>💬 老师留言 (选填)</label>
+                    <textarea class="comment-input" id="commentInput" placeholder="例如：今天背诵课文非常流利..."></textarea>
+                </div>
+
+                <!-- 文件信息 -->
+                <div class="file-info" id="fileInfo">
+                    <span class="icon">📄</span>
+                    <span id="fileInfoText">已拍摄 0 张作业</span>
+                </div>
+
+                <!-- 确认发送按钮 -->
+                <button class="modal-confirm-btn" id="confirmBtn" onclick="confirmArchive()">
+                    ✅ 确认发送给家长
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentName = urlParams.get('name') || '谭圣涵';
+        const studentId = urlParams.get('id') || '1';
+
+        // 状态管理
+        let photos = [];
+        let currentSubject = '数学';
+        let selectedTags = [];
+        let archiveMode = 'normal'; // 'normal' 或 'perfect'
+
+        // 模拟照片
+        const mockPhotos = [
+            'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=200',
+            'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=200',
+            'https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=200'
+        ];
+
+        // 初始化
+        function init() {
+            document.getElementById('stuName').innerText = `为 ${studentName} 拍摄`;
+        }
+
+        // 选择科目
+        function selectSubject(el) {
+            document.querySelectorAll('.subject-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            el.classList.add('active');
+            currentSubject = el.dataset.subject;
+        }
+
+        // 拍照
+        function takePhoto() {
+            // 闪光动画
+            const flash = document.getElementById('flash');
+            flash.classList.add('flash');
+            setTimeout(() => flash.classList.remove('flash'), 150);
+
+            // 震动反馈
+            if (navigator.vibrate) navigator.vibrate(30);
+
+            // 添加模拟照片
+            const photoIndex = photos.length % mockPhotos.length;
+            photos.push({
+                url: mockPhotos[photoIndex],
+                subject: currentSubject,
+                timestamp: new Date().toISOString()
+            });
+
+            // 更新预览条
+            updatePreviewBar();
+
+            // 更新提交按钮状态
+            updateSubmitBtn();
+
+            showToast(`已拍摄 ${photos.length} 张`);
+        }
+
+        // 更新预览条
+        function updatePreviewBar() {
+            const bar = document.getElementById('previewBar');
+            if (photos.length > 0) {
+                bar.innerHTML = photos.slice(-5).map(p => `
+                    <div class="preview-thumb">
+                        <img src="${p.url}" alt="预览">
+                    </div>
+                `).join('');
+
+                if (photos.length > 5) {
+                    bar.innerHTML = `<span style="color:#999;font-size:12px;">+${photos.length - 5}</span>` + bar.innerHTML;
+                }
+            } else {
+                bar.innerHTML = '<span class="preview-empty">📷 点击快门拍摄错题</span>';
+            }
+        }
+
+        // 更新提交按钮
+        function updateSubmitBtn() {
+            const btn = document.getElementById('submitBtn');
+            const count = document.getElementById('photoCount');
+            count.innerText = photos.length;
+
+            if (photos.length > 0) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        // ========== 归档弹窗 (双模式) ==========
+
+        // 打开归档弹窗
+        function openArchiveModal(type) {
+            archiveMode = type;
+
+            // 普通模式必须有照片
+            if (type === 'normal' && photos.length === 0) {
+                showToast('请先拍摄作业照片');
+                return;
+            }
+
+            const modal = document.getElementById('archiveModal');
+            const header = document.getElementById('modalHeader');
+            const title = document.getElementById('modalTitle');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileInfoText = document.getElementById('fileInfoText');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            // 重置表单状态
+            selectedTags = [];
+            document.querySelectorAll('.tag-item').forEach(tag => tag.classList.remove('active'));
+            document.getElementById('commentInput').value = '';
+
+            if (type === 'perfect') {
+                // === 全对模式 ===
+                header.className = 'modal-header perfect';
+                title.innerText = '🎉 确认全对归档';
+                fileInfo.className = 'file-info perfect';
+                fileInfoText.innerText = '✨ 今日无错题，将生成表扬卡';
+                confirmBtn.className = 'modal-confirm-btn perfect';
+                confirmBtn.innerText = '🎉 发送表扬给家长';
+
+                // 自动选中好评标签
+                const firstTag = document.querySelector('.tag-item');
+                if (firstTag) {
+                    firstTag.classList.add('active');
+                    selectedTags.push(firstTag.dataset.tag);
+                }
+            } else {
+                // === 普通模式 ===
+                header.className = 'modal-header normal';
+                title.innerText = '📦 确认错题归档';
+                fileInfo.className = 'file-info normal';
+                fileInfoText.innerText = `📄 已拍摄 ${photos.length} 张${currentSubject}作业，准备生成 PDF`;
+                confirmBtn.className = 'modal-confirm-btn normal';
+                confirmBtn.innerText = '✅ 确认发送给家长';
+            }
+
+            // 显示弹窗
+            modal.classList.add('show');
+        }
+
+        // 关闭归档弹窗
+        function closeArchiveModal() {
+            document.getElementById('archiveModal').classList.remove('show');
+        }
+
+        // 点击遮罩关闭
+        function closeModalOnOverlay(event) {
+            if (event.target.id === 'archiveModal') {
+                closeArchiveModal();
+            }
+        }
+
+        // 切换标签选中状态
+        function toggleTag(el) {
+            el.classList.toggle('active');
+            const tag = el.dataset.tag;
+
+            if (el.classList.contains('active')) {
+                selectedTags.push(tag);
+            } else {
+                selectedTags = selectedTags.filter(t => t !== tag);
+            }
+        }
+
+        // 确认归档
+        function confirmArchive() {
+            const comment = document.getElementById('commentInput').value.trim();
+
+            // 收集反馈数据
+            const feedbackData = {
+                studentId: studentId,
+                studentName: studentName,
+                subject: currentSubject,
+                archiveMode: archiveMode,
+                photoCount: archiveMode === 'perfect' ? 0 : photos.length,
+                isPerfect: archiveMode === 'perfect',
+                tags: selectedTags,
+                comment: comment || (archiveMode === 'perfect' ? '今日表现优秀，无错题归档' : ''),
+                timestamp: new Date().toISOString()
+            };
+
+            console.log('归档数据:', feedbackData);
+
+            // 关闭弹窗
+            closeArchiveModal();
+
+            // 模拟提交
+            if (archiveMode === 'perfect') {
+                showToast('🎉 已发送表扬卡给家长！');
+            } else {
+                showToast('📤 后台上传中...');
+            }
+
+            setTimeout(() => {
+                const tagStr = selectedTags.length > 0 ? selectedTags.join(',') : '';
+                const perfectFlag = archiveMode === 'perfect' ? '1' : '0';
+
+                window.location.href = `check-in.html?uploaded=${studentId}&count=${photos.length}&subject=${currentSubject}&tags=${encodeURIComponent(tagStr)}&perfect=${perfectFlag}`;
+            }, 1000);
+        }
+
+        // 返回
+        function goBack() {
+            if (photos.length > 0) {
+                if (confirm('已拍摄的照片将不会保存，确定返回吗？')) {
+                    history.back() || (window.location.href = 'check-in.html');
+                }
+            } else {
+                history.back() || (window.location.href = 'check-in.html');
+            }
+        }
+
+        // Toast 提示
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 1500);
+        }
+
+        // 初始化
+        init();
+    </script>
+
+</body>
+
+</html>

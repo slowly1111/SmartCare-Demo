@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>托管助手 - 老师首页</title>
+    <style>
+        /* --- 全局样式 --- */
+        :root {
+            --primary-color: #07c160;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --text-sub: #999;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app-shell {
+            width: 100%;
+            max-width: 414px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* --- 1. 头部区域 --- */
+        .header {
+            background: #fff;
+            padding: 20px 20px 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 22px;
+            color: var(--text-main);
+        }
+
+        .header-left p {
+            margin: 5px 0 0 0;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #eee;
+            background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
+            background-size: cover;
+            border: 1px solid #eee;
+        }
+
+        /* --- 2. 快捷功能区 (金刚区) --- */
+        .quick-actions {
+            display: flex;
+            justify-content: space-around;
+            background: #fff;
+            padding: 15px 0 20px 0;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .action-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: #f0f9ff;
+            color: #1890ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .action-item:nth-child(2) .icon-box {
+            background: #fff0f6;
+            color: #eb2f96;
+        }
+
+        /* 历史记录色 */
+        .action-item:nth-child(3) .icon-box {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        /* 设置色 */
+
+        /* --- 弹窗样式 --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: #fff;
+            width: 90%;
+            max-width: 380px;
+            border-radius: 16px;
+            padding: 24px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fafafa;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+        }
+
+        .form-input::placeholder {
+            color: #bbb;
+        }
+
+        /* 警告提示 (编辑模式专用) */
+        .edit-warning {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #cf1322;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .edit-warning.hidden {
+            display: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 15px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-save {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .btn-save:active {
+            background: #06ad56;
+        }
+
+        .action-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* --- 3. 班级列表 (核心) --- */
+        .section-title {
+            padding: 15px 20px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .add-class-btn {
+            font-size: 13px;
+            color: var(--primary-color);
+            background: rgba(7, 193, 96, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .class-list {
+            padding: 0 15px 40px 15px;
+        }
+
+        /* 班级卡片 */
+        .class-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+
+        .class-card:active {
+            transform: scale(0.98);
+            background: #fafafa;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .class-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .class-time {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            align-items: center;
+        }
+
+        .class-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .tag-noon {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        /* 午托 */
+        .tag-night {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        /* 晚托 */
+
+        /* 进度区域 */
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* 状态变体 */
+        /* 进行中 */
+        .class-card.active .progress-fill {
+            background: var(--primary-color);
+            width: 60%;
+        }
+
+        .class-card.active .status-text {
+            color: var(--primary-color);
+        }
+
+        /* 待开始 */
+        .class-card.pending .progress-fill {
+            background: #ddd;
+            width: 0%;
+        }
+
+        .class-card.pending .class-name {
+            color: #666;
+        }
+
+        /* 箭头 */
+        .card-arrow {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ddd;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app-shell">
+
+        <div class="header">
+            <div class="header-left">
+                <h1>你好，李老师 👋</h1>
+                <p>阳光贝贝托管中心 | 2026年2月5日</p>
+            </div>
+            <div class="avatar"></div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="action-item" onclick="openStudentModal('create')">
+                <div class="icon-box">➕</div>
+                <span class="action-label">添加学生</span>
+            </div>
+            <div class="action-item" onclick="window.location.href='history.html'">
+                <div class="icon-box">📅</div>
+                <span class="action-label">历史记录</span>
+            </div>
+            <div class="action-item" onclick="window.location.href='settings.html'">
+                <div class="icon-box">⚙️</div>
+                <span class="action-label">管理设置</span>
+            </div>
+        </div>
+
+        <div class="section-title">
+            我的班级
+            <span class="add-class-btn" onclick="openClassModal()">+ 建班</span>
+        </div>
+
+        <div class="class-list">
+
+            <div class="class-card active" onclick="enterClass('一年级午托班')">
+                <div class="card-header">
+                    <div>
+                        <div class="class-name">一年级午托精选班</div>
+                        <div class="class-time">🕒 11:30 - 14:00</div>
+                    </div>
+                    <div class="class-tag tag-noon">午托</div>
+                </div>
+
+                <div class="progress-info">
+                    <span>🟢 已入班: 12人</span>
+                    <span>总人数: 20人</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 60%"></div>
+                </div>
+            </div>
+
+            <div class="class-card pending" onclick="enterClass('三年级作业辅导班')">
+                <div class="card-header">
+                    <div>
+                        <div class="class-name">三年级作业辅导班</div>
+                        <div class="class-time">🕒 16:30 - 20:00</div>
+                    </div>
+                    <div class="class-tag tag-night">晚托</div>
+                </div>
+
+                <div class="progress-info">
+                    <span>⚪ 待接送</span>
+                    <span>总人数: 15人</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="class-card" onclick="enterClass('周五书法兴趣班')">
+                <div class="card-header">
+                    <div>
+                        <div class="class-name">周五书法兴趣班</div>
+                        <div class="class-time">🕒 周五 15:30</div>
+                    </div>
+                    <div style="background:#f9f0ff; color:#722ed1;" class="class-tag">兴趣</div>
+                </div>
+                <div class="progress-info">
+                    <span>⚪ 待开始</span>
+                    <span>总人数: 8人</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 学生表单弹窗 (公用组件：录入/编辑) -->
+    <div class="modal-overlay" id="studentModal">
+        <div class="modal">
+            <h3 class="modal-title" id="modalTitle">➕ 录入新学生</h3>
+
+            <!-- 编辑模式专用警告 -->
+            <div class="edit-warning hidden" id="editWarning">
+                <span>⚠️</span>
+                <span>注意：修改班级后，该学生的历史档案将自动转移至新班级</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">学生姓名 <span style="color:#cf1322;">*</span></label>
+                <input type="text" class="form-input" id="studentName" placeholder="请输入学生姓名">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">所属班级 <span style="color:#cf1322;">*</span></label>
+                <select class="form-input" id="studentClass">
+                    <option value="" disabled selected>请选择班级</option>
+                    <option value="class_001">一年级午托精选班</option>
+                    <option value="class_002">三年级作业辅导班</option>
+                    <option value="class_003">周五书法兴趣班</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">家长称呼 (关系)</label>
+                <select class="form-input" id="parentRelation">
+                    <option value="妈妈">妈妈</option>
+                    <option value="爸爸">爸爸</option>
+                    <option value="爷爷">爷爷</option>
+                    <option value="奶奶">奶奶</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">家长手机号 <span style="color:#cf1322;">*</span></label>
+                <input type="tel" class="form-input" id="parentPhone" placeholder="11位手机号码 (家长登录凭证)" maxlength="11">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeStudentModal()">取消</button>
+                <button class="btn btn-save" id="submitBtn" onclick="submitStudent()">确认录入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 班级表单弹窗 (新建班级) -->
+    <div class="modal-overlay" id="classModal">
+        <div class="modal">
+            <h3 class="modal-title" id="classModalTitle">➕ 新建班级</h3>
+
+            <div class="form-group">
+                <label class="form-label">班级名称 <span style="color:#cf1322;">*</span></label>
+                <input type="text" class="form-input" id="className" placeholder="如：一年级午托班">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">托管类型</label>
+                <select class="form-input" id="classType">
+                    <option value="午托">午托</option>
+                    <option value="晚托">晚托</option>
+                    <option value="全托">全托</option>
+                    <option value="兴趣班">兴趣班</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">上课时间</label>
+                <input type="text" class="form-input" id="classTime" placeholder="如：周一至周五 11:30-14:00">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeClassModal()">取消</button>
+                <button class="btn btn-save" onclick="submitClass()">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 当前模式：'create' 或 'edit'
+        let currentMode = 'create';
+        // 编辑模式下的学生 ID
+        let editingStudentId = null;
+
+        /**
+         * 打开学生表单弹窗
+         * @param {'create' | 'edit'} mode - 模式：录入或编辑
+         * @param {Object} studentData - 编辑模式下的学生数据
+         */
+        function openStudentModal(mode, studentData = null) {
+            currentMode = mode;
+            const modal = document.getElementById('studentModal');
+            const title = document.getElementById('modalTitle');
+            const warning = document.getElementById('editWarning');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // 重置表单
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentClass').selectedIndex = 0;
+            document.getElementById('parentRelation').selectedIndex = 0;
+            document.getElementById('parentPhone').value = '';
+
+            if (mode === 'edit' && studentData) {
+                // 编辑模式
+                title.innerHTML = '✏️ 编辑学生资料';
+                warning.classList.remove('hidden');
+                submitBtn.textContent = '保存修改';
+                editingStudentId = studentData.id;
+
+                // 回填数据
+                document.getElementById('studentName').value = studentData.name || '';
+                if (studentData.classId) {
+                    document.getElementById('studentClass').value = studentData.classId;
+                }
+                if (studentData.parentRelation) {
+                    document.getElementById('parentRelation').value = studentData.parentRelation;
+                }
+                document.getElementById('parentPhone').value = studentData.phone || '';
+            } else {
+                // 录入模式
+                title.innerHTML = '➕ 录入新学生';
+                warning.classList.add('hidden');
+                submitBtn.textContent = '确认录入';
+                editingStudentId = null;
+            }
+
+            modal.classList.add('show');
+        }
+
+        /**
+         * 关闭学生表单弹窗
+         */
+        function closeStudentModal() {
+            const modal = document.getElementById('studentModal');
+            modal.classList.remove('show');
+        }
+
+        /**
+         * 提交学生数据
+         */
+        function submitStudent() {
+            const name = document.getElementById('studentName').value.trim();
+            const classId = document.getElementById('studentClass').value;
+            const parentRelation = document.getElementById('parentRelation').value;
+            const phone = document.getElementById('parentPhone').value.trim();
+
+            // 验证必填项
+            if (!name) {
+                alert('请输入学生姓名');
+                return;
+            }
+            if (!classId) {
+                alert('请选择所属班级');
+                return;
+            }
+            if (!phone || phone.length !== 11) {
+                alert('请输入正确的11位手机号码');
+                return;
+            }
+
+            // 构造数据
+            const studentData = {
+                name,
+                classId,
+                parentRelation,
+                phone
+            };
+
+            if (currentMode === 'edit') {
+                // TODO: 调用编辑 API
+                console.log('编辑学生:', editingStudentId, studentData);
+                alert(`✅ 学生 "${name}" 的资料已更新！`);
+            } else {
+                // TODO: 调用新增 API
+                console.log('新增学生:', studentData);
+                alert(`✅ 学生 "${name}" 已成功录入！`);
+            }
+
+            closeStudentModal();
+        }
+
+        /**
+         * 点击遮罩层关闭弹窗
+         */
+        document.getElementById('studentModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeStudentModal();
+            }
+        });
+
+        function enterClass(className) {
+            // 跳转到考勤工作台，带上班级名称
+            window.location.href = `check-in.html?class=${encodeURIComponent(className)}`;
+        }
+
+        // ====== 班级弹窗功能 ======
+        /**
+         * 打开新建班级弹窗
+         */
+        function openClassModal() {
+            const modal = document.getElementById('classModal');
+            // 重置表单
+            document.getElementById('className').value = '';
+            document.getElementById('classType').selectedIndex = 0;
+            document.getElementById('classTime').value = '';
+            modal.classList.add('show');
+        }
+
+        /**
+         * 关闭班级弹窗
+         */
+        function closeClassModal() {
+            document.getElementById('classModal').classList.remove('show');
+        }
+
+        /**
+         * 提交新建班级
+         */
+        function submitClass() {
+            const name = document.getElementById('className').value.trim();
+            const type = document.getElementById('classType').value;
+            const time = document.getElementById('classTime').value.trim();
+
+            if (!name) {
+                alert('请输入班级名称');
+                return;
+            }
+
+            // TODO: 调用创建班级 API
+            console.log('新建班级:', { name, type, time });
+            alert(`✅ 班级 "${name}" 创建成功！`);
+            closeClassModal();
+
+            // 刷新页面以显示新班级 (实际开发时可动态添加)
+            // location.reload();
+        }
+
+        /**
+         * 点击遮罩层关闭班级弹窗
+         */
+        document.getElementById('classModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeClassModal();
+            }
+        });
+
+        // ====== 示例：如何调用编辑模式 ======
+        // openStudentModal('edit', {
+        //     id: 'stu_001',
+        //     name: '谭圣涵',
+        //     classId: 'class_001',
+        //     parentRelation: '爸爸',
+        //     phone: '13800138000'
+        // });
+    </script>
+
+</body>
+
+</html>

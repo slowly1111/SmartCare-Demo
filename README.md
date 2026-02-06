@@ -4,8 +4,8 @@
 
 ## 📱 演示入口
 
-🚀 **[点击这里体验 Demo](demo-nav.html)**  
-*(部署后请访问 `/demo-nav.html` 或设置其为默认首页)*
+🚀 **[点击这里体验 Demo](index.html)**  
+*(部署后直接访问项目根域名即可，例如 `https://smart-care-demo.vercel.app/`)*
 
 ## ✨ 核心功能
 

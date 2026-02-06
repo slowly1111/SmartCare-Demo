@@ -215,122 +215,159 @@
             text-decoration: none;
         }
 
-        /* 微信授权弹窗 - 仿微信原生样式 */
-        .modal-overlay {
+        /* 微信授权弹窗 - 仿微信原生底部半屏样式 */
+        .auth-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             display: none;
             justify-content: center;
-            align-items: center;
+            align-items: flex-end;
             z-index: 100;
         }
 
-        .modal-overlay.show {
+        .auth-overlay.show {
             display: flex;
         }
 
-        .wechat-auth-modal {
+        .auth-sheet {
             background: #fff;
-            width: 85%;
-            max-width: 300px;
-            border-radius: 12px;
-            overflow: hidden;
-            animation: popIn 0.25s ease;
+            width: 100%;
+            max-width: 414px;
+            border-radius: 12px 12px 0 0;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            animation: sheetSlideUp 0.3s ease;
         }
 
-        @keyframes popIn {
+        @keyframes sheetSlideUp {
             from {
-                transform: scale(0.85);
-                opacity: 0;
+                transform: translateY(100%);
             }
 
             to {
-                transform: scale(1);
-                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        .wechat-auth-header {
-            background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
-            padding: 28px 20px;
-            text-align: center;
-            color: #fff;
+        .auth-sheet-header {
+            padding: 20px 20px 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
         }
 
-        .wechat-logo {
-            font-size: 42px;
-            margin-bottom: 10px;
-        }
-
-        .wechat-auth-title {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .wechat-auth-subtitle {
-            font-size: 12px;
-            opacity: 0.85;
-        }
-
-        .wechat-auth-body {
-            padding: 24px 20px;
-            text-align: center;
-        }
-
-        .auth-desc {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .phone-box {
-            background: #f7f7f7;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 22px;
-            font-weight: 600;
-            color: #333;
-            letter-spacing: 2px;
+        .auth-sheet-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 8px;
         }
 
-        .phone-tip {
-            font-size: 12px;
-            color: #999;
+        .auth-sheet-title .wechat-icon {
+            font-size: 24px;
         }
 
-        .wechat-auth-footer {
+        .auth-sheet-title h4 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .auth-sheet-subtitle {
+            font-size: 13px;
+            color: #888;
+            margin-left: 34px;
+        }
+
+        .phone-list {
+            padding: 0;
+        }
+
+        .phone-item {
             display: flex;
-            border-top: 1px solid #e8e8e8;
-        }
-
-        .wechat-auth-footer button {
-            flex: 1;
-            height: 50px;
-            border: none;
-            background: #fff;
-            font-size: 16px;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f5f5f5;
             cursor: pointer;
             transition: background 0.15s;
         }
 
-        .wechat-auth-footer button:active {
+        .phone-item:active {
             background: #f5f5f5;
         }
 
-        .wechat-auth-footer button:first-child {
-            border-right: 1px solid #e8e8e8;
+        .phone-item.selected {
+            background: #f0fff4;
+        }
+
+        .phone-item .phone-number {
+            flex: 1;
+            font-size: 17px;
+            color: #333;
+            letter-spacing: 1px;
+        }
+
+        .phone-item .check-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #07c160;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .phone-item .check-icon.hidden {
+            visibility: hidden;
+        }
+
+        .other-phone-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            color: #576b95;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .other-phone-item:active {
+            background: #f5f5f5;
+        }
+
+        .auth-sheet-footer {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px 20px 20px;
+        }
+
+        .auth-sheet-footer button {
+            flex: 1;
+            height: 44px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .auth-sheet-footer button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-auth-deny {
+            background: #f5f5f5;
+            border: none;
             color: #333;
         }
 
-        .wechat-auth-footer button:last-child {
-            color: #07c160;
+        .btn-auth-allow {
+            background: #07c160;
+            border: none;
+            color: #fff;
             font-weight: 500;
         }
 
@@ -576,22 +613,28 @@
 
     </div>
 
-    <!-- 微信授权弹窗 - 仿微信原生样式 -->
-    <div class="modal-overlay" id="authModal">
-        <div class="wechat-auth-modal">
-            <div class="wechat-auth-header">
-                <div class="wechat-logo">📨</div>
-                <div class="wechat-auth-title">授权手机号</div>
-                <div class="wechat-auth-subtitle">智能托管助手</div>
+    <!-- 微信授权弹窗 - 仿微信原生底部半屏样式 -->
+    <div class="auth-overlay" id="authModal">
+        <div class="auth-sheet">
+            <div class="auth-sheet-header">
+                <div class="auth-sheet-title">
+                    <span class="wechat-icon">🟢</span>
+                    <h4>微信开放平台</h4>
+                </div>
+                <div class="auth-sheet-subtitle">智能托管助手 申请获取你的手机号</div>
             </div>
-            <div class="wechat-auth-body">
-                <div class="auth-desc">该小程序将获取你绑定的手机号</div>
-                <div class="phone-box" id="phoneDisplay">138****8000</div>
-                <div class="phone-tip">仅用于登录验证</div>
+            <div class="phone-list">
+                <div class="phone-item selected" id="phoneItem" onclick="selectPhone()">
+                    <span class="phone-number" id="phoneDisplay">138****8000</span>
+                    <span class="check-icon" id="checkIcon">✓</span>
+                </div>
+                <div class="other-phone-item" onclick="useOtherPhone()">
+                    使用其他手机号
+                </div>
             </div>
-            <div class="wechat-auth-footer">
-                <button onclick="denyAuth()">拒绝</button>
-                <button onclick="allowAuth()">允许</button>
+            <div class="auth-sheet-footer">
+                <button class="btn-auth-deny" onclick="denyAuth()">拒绝</button>
+                <button class="btn-auth-allow" onclick="allowAuth()">允许</button>
             </div>
         </div>
     </div>
@@ -738,6 +781,17 @@
             t.innerText = msg;
             t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 2000);
+        }
+
+        // 选择手机号（模拟点击效果）
+        function selectPhone() {
+            document.getElementById('phoneItem').classList.add('selected');
+            document.getElementById('checkIcon').classList.remove('hidden');
+        }
+
+        // 使用其他手机号（Demo提示）
+        function useOtherPhone() {
+            showToast('Demo演示：请使用当前手机号');
         }
     </script>
 

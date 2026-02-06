@@ -471,6 +471,183 @@
             color: #ccc;
             font-size: 12px;
         }
+
+        /* --- 老师资料编辑弹窗 --- */
+        .profile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1000;
+        }
+
+        .profile-modal.show {
+            display: flex;
+        }
+
+        .profile-sheet {
+            background: #fff;
+            width: 100%;
+            max-width: 414px;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 20px 40px 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .profile-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .profile-close {
+            width: 32px;
+            height: 32px;
+            background: #f5f5f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .avatar-edit-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .avatar-edit-wrapper {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .avatar-large {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: #eee;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-camera-icon {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 28px;
+            height: 28px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            border: 2px solid #fff;
+        }
+
+        .avatar-tip {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .profile-form-group {
+            margin-bottom: 20px;
+        }
+
+        .profile-form-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .profile-form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .profile-form-input:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.1);
+        }
+
+        .profile-readonly {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            background: #f5f5f5;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .readonly-lock {
+            font-size: 14px;
+        }
+
+        .profile-readonly-tip {
+            font-size: 12px;
+            color: #bbb;
+            margin-top: 6px;
+        }
+
+        .profile-save-btn {
+            width: 100%;
+            height: 50px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(7, 193, 96, 0.3);
+        }
+
+        .profile-save-btn:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 
@@ -645,6 +822,44 @@
         </div>
     </div>
 
+    <!-- 老师资料编辑弹窗 -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-sheet">
+            <div class="profile-header">
+                <span class="profile-title">编辑个人名片</span>
+                <div class="profile-close" onclick="closeProfileModal()">✕</div>
+            </div>
+
+            <!-- 头像编辑区 -->
+            <div class="avatar-edit-section">
+                <div class="avatar-edit-wrapper" onclick="syncWechatAvatar()">
+                    <div class="avatar-large" id="profileAvatar"
+                        style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');"></div>
+                    <div class="avatar-camera-icon">📷</div>
+                </div>
+                <div class="avatar-tip">点击同步微信头像</div>
+            </div>
+
+            <!-- 称呼编辑 -->
+            <div class="profile-form-group">
+                <label class="profile-form-label">对外称呼</label>
+                <input type="text" class="profile-form-input" id="profileNickname" value="李老师" placeholder="例如：李老师">
+            </div>
+
+            <!-- 手机号只读 -->
+            <div class="profile-form-group">
+                <label class="profile-form-label">登录账号</label>
+                <div class="profile-readonly">
+                    <span id="profilePhone">138****8000</span>
+                    <span class="readonly-lock">🔒</span>
+                </div>
+                <div class="profile-readonly-tip">手机号不可修改，如需更换请重新注册</div>
+            </div>
+
+            <button class="profile-save-btn" onclick="saveProfile()">保存</button>
+        </div>
+    </div>
+
     <script>
         // 模拟班级数据
         let classData = [
@@ -807,7 +1022,68 @@
 
         // 编辑个人资料
         function editProfile() {
-            alert('👤 个人资料编辑功能开发中...\n(Demo演示)');
+            document.getElementById('profileModal').classList.add('show');
+        }
+
+        // 关闭个人资料弹窗
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('show');
+        }
+
+        // 同步微信头像 (模拟)
+        function syncWechatAvatar() {
+            // 模拟微信头像列表
+            const avatars = [
+                'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+                'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
+                'https://api.dicebear.com/7.x/avataaars/svg?seed=Snowball',
+                'https://api.dicebear.com/7.x/avataaars/svg?seed=Muffin',
+                'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie'
+            ];
+            const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+
+            // 更新头像
+            document.getElementById('profileAvatar').style.backgroundImage = `url('${randomAvatar}')`;
+            document.querySelector('.user-avatar').style.backgroundImage = `url('${randomAvatar}')`;
+
+            // 显示提示
+            showToast('✅ 头像已同步');
+        }
+
+        // 保存个人资料
+        function saveProfile() {
+            const nickname = document.getElementById('profileNickname').value.trim();
+            if (!nickname) {
+                alert('请输入对外称呼');
+                return;
+            }
+
+            // 更新显示
+            document.querySelector('.user-name').textContent = nickname;
+
+            closeProfileModal();
+            showToast('✅ 资料已保存');
+        }
+
+        // Toast 提示
+        function showToast(msg) {
+            // 简单实现
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.85);
+                color: #fff;
+                padding: 14px 28px;
+                border-radius: 12px;
+                font-size: 15px;
+                z-index: 9999;
+            `;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1500);
         }
 
         // 关于我们

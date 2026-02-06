@@ -19,18 +19,7 @@
 *   **今日动态**: 查看孩子接送状态、作业报告
 *   **历史档案**: 查看历史错题集与老师评价
 
-## 🛠️ 部署指南 (Vercel)
 
-本项目是纯静态页面，非常适合部署在 Vercel。
-
-1.  将本项目 Fork 或 Clone 到你的 GitHub。
-2.  登录 [Vercel](https://vercel.com)。
-3.  点击 **"Add New"** -> **"Project"**。
-4.  选择 **`SmartCare-Demo`** 仓库并导入。
-5.  点击 **"Deploy"**。
-6.  部署完成后，分享生成的链接即可体验。
-
-> 💡 **提示**: 建议在 Vercel 的 Settings -> Git -> ROOT DIRECTORY 保持默认 (`./`)。
 
 ## ⚠️ 注意事项
 *   本 Demo 为 **纯前端演示**，数据均为本地 Mock 数据，刷新页面后会重置。

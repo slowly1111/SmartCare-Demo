@@ -34,6 +34,8 @@
             width: 100%;
             max-width: 414px;
             height: 100%;
+            height: 100dvh;
+            /* 动态视口高度，适配移动端 */
             display: flex;
             flex-direction: column;
             position: relative;
@@ -154,6 +156,8 @@
         .bottom-controls {
             background: rgba(0, 0, 0, 0.95);
             padding: 15px 15px 35px 15px;
+            padding-bottom: calc(35px + env(safe-area-inset-bottom, 0px));
+            /* 安全区域适配 */
         }
 
         /* 科目选择条 */

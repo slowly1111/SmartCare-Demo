@@ -559,6 +559,170 @@
             font-size: 15px;
             cursor: pointer;
         }
+
+        /* --- 老师初始化选择弹窗 --- */
+        .teacher-init-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .teacher-init-modal.show {
+            display: flex;
+        }
+
+        .init-content {
+            background: #fff;
+            width: 85%;
+            max-width: 320px;
+            border-radius: 16px;
+            padding: 28px 24px;
+            animation: popIn 0.3s ease;
+        }
+
+        .init-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .init-desc {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .init-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .init-btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .init-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-join {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 12px rgba(7, 193, 96, 0.2);
+        }
+
+        .btn-create {
+            background: #fff;
+            color: var(--text-main);
+            border: 1px solid #e0e0e0;
+        }
+
+        /* --- 输入邀请码弹窗 --- */
+        .invite-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 350;
+        }
+
+        .invite-modal.show {
+            display: flex;
+        }
+
+        .invite-content {
+            background: #fff;
+            width: 85%;
+            max-width: 320px;
+            border-radius: 16px;
+            padding: 28px 24px;
+            animation: popIn 0.3s ease;
+        }
+
+        .invite-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .invite-input-wrap {
+            margin-bottom: 24px;
+        }
+
+        .invite-input {
+            width: 100%;
+            height: 48px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            letter-spacing: 4px;
+            outline: none;
+        }
+
+        .invite-input:focus {
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.1);
+        }
+
+        .invite-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .invite-actions button {
+            flex: 1;
+            height: 44px;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-invite-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-invite-confirm {
+            background: var(--primary-color);
+            color: #fff;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -656,12 +820,45 @@
     <div class="success-modal" id="successModal">
         <div class="success-content">
             <div class="success-icon">🎉</div>
-            <div class="success-title">账号创建成功！</div>
+            <div class="success-title" id="successTitle">操作成功！</div>
             <div class="success-desc" id="successDesc">
                 已为您创建托管机构账号<br>
                 建议先去设置中完善机构信息
             </div>
             <button class="success-btn" onclick="goToTeacherHome()">进入首页</button>
+        </div>
+    </div>
+
+    <!-- 老师初始化选择弹窗 (新建机构 vs 输入邀请码) -->
+    <div class="teacher-init-modal" id="teacherInitModal">
+        <div class="init-content">
+            <div class="init-title">欢迎使用智能托管助手</div>
+            <div class="init-desc">
+                系统检测到您是首次验证手机号<br>请选择您的身份
+            </div>
+            <div class="init-options">
+                <button class="init-btn btn-join" onclick="showInviteModal()">
+                    <span>🤝</span> 输入邀请码加入已有机构
+                </button>
+                <button class="init-btn btn-create" onclick="createOrg()">
+                    <span>🏢</span> 我是老板，一键创建新机构
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 输入邀请码弹窗 -->
+    <div class="invite-modal" id="inviteModal">
+        <div class="invite-content">
+            <div class="invite-title">输入邀请码</div>
+            <div class="invite-input-wrap">
+                <input type="text" class="invite-input" id="inviteCodeInput" value="886622" maxlength="6"
+                    placeholder="请输入6位邀请码">
+            </div>
+            <div class="invite-actions">
+                <button class="btn-invite-cancel" onclick="closeInviteModal()">返回</button>
+                <button class="btn-invite-confirm" onclick="confirmInvite()">确认加入</button>
+            </div>
         </div>
     </div>
 
@@ -741,12 +938,51 @@
                     window.location.href = 'teacher-home.html';
                 }, 1000);
             } else {
-                // 新用户：自动注册
+                // 新用户：弹出【加入机构/创建机构】选择页
                 isNewTeacher = true;
-                document.getElementById('successDesc').innerHTML =
-                    '已为您创建托管机构账号<br>建议先去设置中完善机构信息';
-                document.getElementById('successModal').classList.add('show');
+                document.getElementById('teacherInitModal').classList.add('show');
             }
+        }
+
+        // 老板创建新机构
+        function createOrg() {
+            document.getElementById('teacherInitModal').classList.remove('show');
+            document.getElementById('successTitle').innerText = '账号创建成功！';
+            document.getElementById('successDesc').innerHTML = '系统已为您生成专属机构与管理权限<br>建议先去设置中完善机构信息';
+            document.getElementById('successModal').classList.add('show');
+        }
+
+        // 显示输入邀请码弹窗
+        function showInviteModal() {
+            document.getElementById('teacherInitModal').classList.remove('show');
+            document.getElementById('inviteModal').classList.add('show');
+        }
+
+        // 关闭邀请码弹窗
+        function closeInviteModal() {
+            document.getElementById('inviteModal').classList.remove('show');
+            document.getElementById('teacherInitModal').classList.add('show');
+        }
+
+        // 确认输入邀请码并加入
+        function confirmInvite() {
+            const code = document.getElementById('inviteCodeInput').value;
+            if (code.length < 6) {
+                showToast('请输入完整的6位邀请码');
+                return;
+            }
+
+            // 模拟验证成功
+            document.getElementById('inviteModal').classList.remove('show');
+            document.getElementById('loadingText').innerText = '正在验证机构信息...';
+            document.getElementById('loadingOverlay').classList.add('show');
+
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                document.getElementById('successTitle').innerText = '加入机构成功！';
+                document.getElementById('successDesc').innerHTML = '您已成功加入【阳光贝贝托管中心】<br>数据已同步，可开始日常班级工作';
+                document.getElementById('successModal').classList.add('show');
+            }, 1000);
         }
 
         // 家长登录逻辑

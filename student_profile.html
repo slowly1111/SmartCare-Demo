@@ -405,6 +405,216 @@
             background: #f0f0f0;
         }
 
+        /* ====== 五层时间轴样式 ====== */
+        .tl-item {
+            position: relative;
+            padding: 0 0 24px 50px;
+        }
+
+        .tl-item::before {
+            content: '';
+            position: absolute;
+            left: 18px;
+            top: 10px;
+            bottom: 0;
+            width: 2px;
+            background: #e8e8e8;
+        }
+
+        .tl-item:last-child::before {
+            display: none;
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: 10px;
+            top: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #07c160;
+            border: 3px solid #d9f7be;
+        }
+
+        .tl-dot.perfect {
+            background: #faad14;
+            border-color: #ffe58f;
+        }
+
+        .tl-date {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tl-date span {
+            font-weight: normal;
+            color: #999;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+
+        .tl-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 14px;
+            overflow: hidden;
+            /* 限制子元素宽度，触发内层 overflow-x 滚动 */
+        }
+
+        .tl-card.perfect-card {
+            background: linear-gradient(135deg, #fffbe6 0%, #fff7e6 100%);
+            border: 1px solid #ffe58f;
+        }
+
+        .tl-layer {
+            margin-bottom: 12px;
+            min-width: 0;
+            /* 防止 flex 子项擑开父容器 */
+        }
+
+        .tl-layer:last-child {
+            margin-bottom: 0;
+        }
+
+        .tl-layer-title {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tl-attendance {
+            font-size: 13px;
+            color: #52c41a;
+        }
+
+        .tl-task-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .tl-task-row .done {
+            color: #52c41a;
+        }
+
+        .tl-task-row .undone {
+            color: #ff4d4f;
+        }
+
+        .tl-photos {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            /* 隐藏原生滚动条，更像 Native App 滑动体验 */
+            scrollbar-width: none;
+            /* Firefox */
+            -webkit-overflow-scrolling: touch;
+            /* 修复 iOS/移动端滑动卡顿 */
+        }
+
+        .tl-photos::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Edge */
+        }
+
+        .tl-photo-thumb {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: #ddd;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .tl-photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tl-photo-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 10px;
+            text-align: center;
+            padding: 2px 0;
+        }
+
+        .tl-photo-more-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: #f0f0f0;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            border: 1px dashed #ccc;
+        }
+
+        .tl-photo-more-btn:active {
+            background: #e6e6e6;
+        }
+
+        .tl-comment {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .tl-comment::before {
+            content: '👩‍🏫 ';
+        }
+
+        .tl-perfect-banner {
+            text-align: center;
+            font-size: 20px;
+            padding: 16px;
+            background: linear-gradient(135deg, #fffbe6 0%, #fff1b8 100%);
+            border-radius: 8px;
+            color: #d48806;
+        }
+
+        .tl-pdf-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 0;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .tl-pdf-btn:active {
+            background: #f0f0f0;
+        }
+
         /* 底部操作区 */
 
         .btn-delete {
@@ -540,75 +750,15 @@
                 <span class="filter-icon" onclick="showMonthPicker()">📅 按月筛选</span>
             </div>
 
-            <div class="history-list">
+            <!-- 动态五层时间轴（JS 渲染），不再使用静态卡片 -->
+            <div class="history-list" id="timeline-list"></div>
 
-                <!-- 档案1: 有错题+评语 -->
-                <div class="archive-item">
-                    <div class="archive-date">
-                        <span class="date-day">05</span>
-                        <span class="date-month">2月</span>
-                    </div>
-                    <div class="archive-content">
-                        <div class="archive-header">
-                            <span class="archive-title">周四 · 晚托作业报告</span>
-                            <span class="comment-icon" onclick="showComment('今天理解能力有很大进步，继续保持！')">💬</span>
-                        </div>
-                        <div class="archive-desc">数学3页 · 语文2页</div>
-                        <div class="archive-tags-row">
-                            <span class="tag-pill good">👍 书写工整</span>
-                            <span class="tag-pill fast">⚡ 速度快</span>
-                        </div>
-                        <div class="pdf-capsule-sm" onclick="previewPDF('20260205')">
-                            <span>PDF</span> 20260205_错题集.pdf
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 档案2: 有错题+无评语 -->
-                <div class="archive-item">
-                    <div class="archive-date">
-                        <span class="date-day">04</span>
-                        <span class="date-month">2月</span>
-                    </div>
-                    <div class="archive-content">
-                        <div class="archive-header">
-                            <span class="archive-title">周三 · 晚托作业报告</span>
-                        </div>
-                        <div class="archive-desc">英语1页</div>
-                        <div class="archive-tags-row">
-                            <span class="tag-pill warn">🐢 有点拖拉</span>
-                        </div>
-                        <div class="pdf-capsule-sm" onclick="previewPDF('20260204')">
-                            <span>PDF</span> 20260204_错题集.pdf
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 档案3: 今日全对 -->
-                <div class="archive-item">
-                    <div class="archive-date">
-                        <span class="date-day">03</span>
-                        <span class="date-month">2月</span>
-                    </div>
-                    <div class="archive-content">
-                        <div class="archive-header">
-                            <span class="archive-title">周二 · 晚托作业报告</span>
-                            <span class="comment-icon" onclick="showComment('今日全对，非常棒！')">💬</span>
-                        </div>
-                        <div class="archive-desc">今日表现优秀，无错题归档</div>
-                        <div class="archive-tags-row">
-                            <span class="tag-pill perfect">🎉 今日全对</span>
-                            <span class="tag-pill good">🧠 思路清晰</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="btn-delete" onclick="confirm('确定要删除该学生吗？历史数据将无法恢复。')">删除该学生档案</div>
-            </div>
+            <div class="btn-delete" onclick="confirm('确定要删除该学生吗？历史数据将无法恢复。')">删除该学生档案</div>
 
         </div>
 
         <div class="modal-overlay" id="editModal">
+            <!-- 现有编辑弹窗结构 ... -->
             <div class="modal">
                 <h3 style="margin-top:0;">编辑学生信息</h3>
 
@@ -630,28 +780,33 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">家长称呼 (关系)</label>
+                    <label class="form-label">紧急联系人电话</label>
+                    <input type="tel" class="form-input" id="input-phone" value="13800138000">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">与学生关系</label>
                     <select class="form-input" id="input-relation">
                         <option value="爸爸" selected>爸爸</option>
                         <option value="妈妈">妈妈</option>
                         <option value="爷爷">爷爷</option>
                         <option value="奶奶">奶奶</option>
-                        <option value="外公">外公</option>
-                        <option value="外婆">外婆</option>
-                        <option value="家长">其他家长</option>
+                        <option value="其他">其他</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">家长手机号 (用于绑定)</label>
-                    <input type="tel" class="form-input" id="input-phone" value="13800138000">
-                </div>
-
-                <div class="modal-actions">
-                    <button class="btn btn-cancel" onclick="closeEditModal()">取消</button>
-                    <button class="btn btn-save" onclick="saveInfo()">保存</button>
+                <div style="display:flex; gap:12px; margin-top:20px;">
+                    <button class="btn btn-cancel" style="flex:1" onclick="closeEditModal()">取消</button>
+                    <button class="btn btn-primary" style="flex:1" onclick="saveInfo()">保存修改</button>
                 </div>
             </div>
+        </div>
+
+        <!-- 图片大图预览 Modal -->
+        <div class="modal-overlay" id="previewModal" style="background: rgba(0,0,0,0.9); z-index: 2000;"
+            onclick="closePreview()">
+            <img id="previewImage" src=""
+                style="max-width: 90vw; max-height: 80vh; border-radius: 8px; object-fit: contain; margin: auto;">
         </div>
 
         <!-- 月份选择器 -->
@@ -676,10 +831,199 @@
             const studentName = urlParams.get('name') || '谭圣涵';
             const studentId = urlParams.get('id') || '1';
 
+            // ========== 五层时间轴 Mock 数据 ==========
+            const historyRecords = [
+                {
+                    date: '2026-02-21',
+                    weekday: '周三',
+                    attendance: { arriveTime: '16:50', status: '正常入班' },
+                    tasks: [
+                        { subject: '语文', content: '预习第20课《蜘蛛开店》，标注生字词', done: true },
+                        { subject: '数学', content: '一张卷子，基本都上交了', done: false },
+                        { subject: '英语', content: '背诵 Unit 6 单词，家长签字', done: true }
+                    ],
+                    tags: ['👍 书写工整', '⚡ 速度快'],
+                    photos: [
+                        { url: 'assets/mock-photos/chinese1.png', subject: '语文' },
+                        { url: 'assets/mock-photos/chinese1.png', subject: '语文' },
+                        { url: 'assets/mock-photos/chinese1.png', subject: '语文' },
+                        { url: 'assets/mock-photos/math1.png', subject: '数学' },
+                        { url: 'assets/mock-photos/math2.png', subject: '数学' },
+                        { url: 'assets/mock-photos/math1.png', subject: '数学' },
+                        { url: 'assets/mock-photos/english1.png', subject: '英语' },
+                        { url: 'assets/mock-photos/english1.png', subject: '英语' }
+                    ],
+                    comment: '今天理科思维不错，但数学卷子忘在学校了，请家长注意查收并提醒。',
+                    isPerfect: false
+                },
+                {
+                    date: '2026-02-20',
+                    weekday: '周二',
+                    attendance: { arriveTime: '16:40', status: '正常入班' },
+                    tasks: [
+                        { subject: '语文', content: '抱写第19课词语，每个3遍', done: true },
+                        { subject: '数学', content: '练习册第45页', done: true }
+                    ],
+                    tags: ['🧠 思路清晰'],
+                    photos: [],
+                    comment: '今日全对，非常棒！',
+                    isPerfect: true
+                },
+                {
+                    date: '2026-02-19',
+                    weekday: '周一',
+                    attendance: { arriveTime: '16:55', status: '正常入班' },
+                    tasks: [
+                        { subject: '英语', content: '单元测试卷', done: false }
+                    ],
+                    tags: ['龟 有点拖拉'],
+                    photos: [
+                        { url: 'assets/mock-photos/english1.png', subject: '英语' }
+                    ],
+                    comment: '',
+                    isPerfect: false
+                },
+                {
+                    date: '2026-02-18',
+                    weekday: '周日',
+                    attendance: null,
+                    tasks: [],
+                    tags: ['👍 书写工整', '⚡ 速度快', '🧠 思路清晰'],
+                    photos: [
+                        { url: 'assets/mock-photos/math2.png', subject: '数学' },
+                        { url: 'assets/mock-photos/chinese1.png', subject: '语文' },
+                        { url: 'assets/mock-photos/english1.png', subject: '英语' }
+                    ],
+                    comment: '今天的写字很认真，希望这种状态能继续保持。',
+                    isPerfect: false
+                },
+                {
+                    date: '2026-02-17',
+                    weekday: '周六',
+                    attendance: { arriveTime: '09:00', status: '正常入班' },
+                    tasks: [
+                        { subject: '语文', content: '读书笔记', done: true },
+                        { subject: '数学', content: '口算题卡', done: true },
+                        { subject: '英语', content: '录音作业', done: true }
+                    ],
+                    tags: ['🎉 今日全对', '👍 书写工整'],
+                    photos: [],
+                    comment: '',
+                    isPerfect: true
+                }
+            ];
+
+            /**
+             * 渲染五层时间轴
+             * 核心原则：某层数据为空时该层 DOM 不渲染（无感降级）
+             */
+            function renderTimeline() {
+                const container = document.getElementById('timeline-list');
+                container.innerHTML = historyRecords.map(rec => {
+                    const d = new Date(rec.date);
+                    const dayStr = String(d.getDate()).padStart(2, '0');
+                    const monthStr = `${d.getMonth() + 1}月`;
+
+                    // 动态组装五层
+                    let layers = '';
+
+                    // 层1: 考勤
+                    if (rec.attendance) {
+                        layers += `
+                        <div class="tl-layer">
+                            <div class="tl-layer-title">📍 入班签到</div>
+                            <div class="tl-attendance">${rec.attendance.arriveTime} ${rec.attendance.status}</div>
+                        </div>`;
+                    }
+
+                    // 层2: 作业清单
+                    if (rec.tasks && rec.tasks.length > 0) {
+                        const taskRows = rec.tasks.map(t => {
+                            const icon = t.done ? '<span class="done">✅</span>' : '<span class="undone">❌</span>';
+                            return `<div class="tl-task-row">${icon} ${t.subject} - ${t.content}</div>`;
+                        }).join('');
+                        layers += `
+                        <div class="tl-layer">
+                            <div class="tl-layer-title">📋 今日作业清单</div>
+                            ${taskRows}
+                        </div>`;
+                    }
+
+                    // 层3: 表现标签
+                    if (rec.tags && rec.tags.length > 0) {
+                        const tagClass = tag => {
+                            if (tag.includes('全对')) return 'perfect';
+                            if (tag.includes('拖拉') || tag.includes('粗心')) return 'warn';
+                            if (tag.includes('速度')) return 'fast';
+                            return 'good';
+                        };
+                        const tagHtml = rec.tags.map(t => `<span class="tag-pill ${tagClass(t)}">${t}</span>`).join('');
+                        layers += `
+                        <div class="tl-layer">
+                            <div class="tl-layer-title">🏷️ 综合表现</div>
+                            <div class="archive-tags-row">${tagHtml}</div>
+                        </div>`;
+                    }
+
+                    // 层4: 错题原片 / 全对表扬
+                    if (rec.isPerfect) {
+                        layers += `
+                        <div class="tl-layer">
+                            <div class="tl-perfect-banner">🎉 今日无错题归档，表现优异！</div>
+                        </div>`;
+                    } else if (rec.photos && rec.photos.length > 0) {
+                        const photoHtml = rec.photos.map(p => `
+                        <div class="tl-photo-thumb" onclick="showPreview('${p.url}')">
+                            <img src="${p.url}" alt="错题">
+                            <div class="tl-photo-label">${p.subject}</div>
+                        </div>`).join('');
+
+                        layers += `
+                        <div class="tl-layer">
+                            <div class="tl-layer-title">📎 当日错题原片与诊断</div>
+                            <div class="tl-photos">${photoHtml}</div>
+                        </div>`;
+                    }
+
+                    // 层5: 老师留言
+                    if (rec.comment && rec.comment.trim()) {
+                        layers += `
+                        <div class="tl-layer">
+                            <div class="tl-layer-title">👩‍🏫 带班寄语</div>
+                            <div class="tl-comment">${rec.comment}</div>
+                        </div>`;
+                    }
+
+                    // 底部 PDF 按钮
+                    const dateId = rec.date.replace(/-/g, '');
+                    const pdfBtnHtml = !rec.isPerfect && rec.photos && rec.photos.length > 0 ? `
+                    <div class="tl-layer">
+                        <div class="tl-pdf-btn" onclick="previewPDF('${dateId}')">
+                            🖨️ 导出/打印《今日学情诊断报告.pdf》
+                        </div>
+                    </div>` : '';
+
+                    const cardClass = rec.isPerfect ? 'tl-card perfect-card' : 'tl-card';
+                    const dotClass = rec.isPerfect ? 'tl-dot perfect' : 'tl-dot';
+
+                    return `
+                    <div class="tl-item">
+                        <div class="${dotClass}"></div>
+                        <div class="tl-date">${monthStr}${dayStr}日 <span>(${rec.weekday})</span></div>
+                        <div class="${cardClass}">
+                            ${layers}
+                            ${pdfBtnHtml}
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+
             // 初始化页面
             function init() {
                 document.getElementById('display-name').innerText = studentName;
                 document.getElementById('input-name').value = studentName;
+                renderTimeline();
             }
 
             // 返回考勤工作台
@@ -696,28 +1040,18 @@
             }
 
             function saveInfo() {
-                // 1. 获取输入
                 const newName = document.getElementById('input-name').value;
                 const newPhone = document.getElementById('input-phone').value;
                 const newRelation = document.getElementById('input-relation').value;
-
-                // 获取选中的班级文本（用于前端展示更新）
                 const classSelect = document.getElementById('input-class');
                 const newClassName = classSelect.options[classSelect.selectedIndex].text;
 
-                // 2. 更新页面展示
                 document.getElementById('display-name').innerText = newName;
-                // 更新卡片上的班级标签
                 document.querySelector('.class-badge').innerText = newClassName;
-                // 更新电话按钮上的号码
                 document.querySelector('.phone-num').innerText = newPhone + ` (${newRelation})`;
-                // 更新拨号功能的参数 (重新绑定onclick)
                 document.querySelector('.phone-action').setAttribute('onclick', `callParent('${newPhone}')`);
 
                 closeEditModal();
-
-                // 3. 实际开发提示：
-                // 这里需要调用云函数 updateStudentInfo(id, name, phone, class_id)
                 alert(`修改成功！\n学生班级：${newClassName}\n家长联系：${newRelation} - ${newPhone}`);
             }
 
@@ -731,33 +1065,89 @@
             }
 
             function selectMonth(m) {
-                if (m > 2) return; // 模拟未来月份不可选
+                if (m > 2) return;
                 closeMonthPicker();
                 alert(`已切换至 ${m} 月的数据`);
-                // 实际开发中这里会重新请求数据并渲染列表
             }
 
-            // 模拟拨打电话
             function callParent(phone) {
-                // 在小程序里，这里会调用 wx.makePhoneCall({ phoneNumber: phone })
                 if (confirm(`确定要拨打家长电话吗？\n号码：${phone}`)) {
-                    console.log("Calling " + phone);
-                    // window.location.href = `tel:${phone}`; // H5 写法
+                    console.log('Calling ' + phone);
                 }
             }
 
-            // 查看老师评语
             function showComment(text) {
                 alert('👩‍🏫 老师评语：\n\n' + text);
             }
 
-            // 预览PDF
             function previewPDF(fileId) {
-                alert('正在打开: ' + fileId + '_错题集.pdf');
+                alert('正在打开: ' + fileId + '_学情诊断报告.pdf');
             }
 
-            // 初始化
+            // 大图预览逻辑
+            function showPreview(url) {
+                const modal = document.getElementById('previewModal');
+                const img = document.getElementById('previewImage');
+                img.src = url;
+                modal.style.display = 'flex';
+            }
+
+            function closePreview() {
+                document.getElementById('previewModal').style.display = 'none';
+            }
+
+            // 为所有 .tl-photos 容器启用鼠标拖拽滚动 + 鼠标滚轮横向滚动
+            // NOTE: 桌面端隐藏滚动条后，用户无法用鼠标原生横滑，必须用 JS 模拟
+            function enableDragScroll() {
+                document.querySelectorAll('.tl-photos').forEach(container => {
+                    let isDown = false;
+                    let startX;
+                    let scrollLeft;
+
+                    // 鼠标按下开始拖拽
+                    container.addEventListener('mousedown', e => {
+                        isDown = true;
+                        container.style.cursor = 'grabbing';
+                        startX = e.pageX - container.offsetLeft;
+                        scrollLeft = container.scrollLeft;
+                        e.preventDefault();
+                    });
+
+                    container.addEventListener('mouseleave', () => {
+                        isDown = false;
+                        container.style.cursor = 'grab';
+                    });
+
+                    container.addEventListener('mouseup', () => {
+                        isDown = false;
+                        container.style.cursor = 'grab';
+                    });
+
+                    container.addEventListener('mousemove', e => {
+                        if (!isDown) return;
+                        e.preventDefault();
+                        const x = e.pageX - container.offsetLeft;
+                        const walk = (x - startX) * 1.5; // 拖拽灵敏度
+                        container.scrollLeft = scrollLeft - walk;
+                    });
+
+                    // 鼠标滚轮转为横向滚动
+                    container.addEventListener('wheel', e => {
+                        if (container.scrollWidth > container.clientWidth) {
+                            e.preventDefault();
+                            container.scrollLeft += e.deltaY;
+                        }
+                    }, { passive: false });
+
+                    // 设置默认光标
+                    container.style.cursor = 'grab';
+                });
+            }
+
+            // 启动
             init();
+            // 等待 DOM 渲染完毕后绑定拖拽事件
+            setTimeout(enableDragScroll, 100);
         </script>
 
 </body>

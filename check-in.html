@@ -4,16 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>智能托管助手 MVP v1.2</title>
+    <title>智能托管助手 - 班级详情</title>
     <style>
         /* --- 1. 全局基础样式 --- */
         :root {
             --primary-color: #07c160;
-            /* 微信绿 */
             --warning-color: #ffb800;
-            /* 途中黄 */
             --danger-color: #fa5151;
-            /* 请假红 */
             --bg-color: #f7f8fa;
             --text-main: #333;
             --text-sub: #999;
@@ -41,7 +38,6 @@
             max-width: 414px;
             height: 100%;
             height: 100dvh;
-            /* 动态视口高度，适配移动端 */
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
@@ -61,6 +57,7 @@
             font-size: 17px;
             z-index: 20;
             flex-shrink: 0;
+            position: relative;
         }
 
         #toast {
@@ -77,7 +74,54 @@
             display: none;
         }
 
-        /* --- 2. 核心：顶部统计筛选条 (升级点) --- */
+        /* --- 1.5 页面主Tab导航 --- */
+        .main-tabs {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+            padding: 0 10px;
+        }
+
+        .main-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 15px;
+            color: var(--text-sub);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .main-tab.active {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .main-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 30%;
+            width: 40%;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* --- 2. 核心：顶部统计筛选条 --- */
         .stats-tabs {
             background: #fff;
             padding: 10px 0;
@@ -94,7 +138,6 @@
             cursor: pointer;
             transition: all 0.2s;
             opacity: 0.6;
-            /* 默认半透明 */
         }
 
         .tab-item.active {
@@ -102,9 +145,7 @@
             transform: scale(1.05);
         }
 
-        /* 选中高亮 */
         .tab-item::after {
-            /* 选中指示条 */
             content: '';
             position: absolute;
             bottom: -10px;
@@ -120,7 +161,6 @@
             background: var(--primary-color);
         }
 
-        /* 针对不同状态的指示条颜色 */
         .tab-item[data-filter="0"].active::after {
             background: #999;
         }
@@ -150,7 +190,6 @@
             color: var(--text-sub);
         }
 
-        /* 特定颜色覆盖 */
         .tab-item[data-filter="1"] .stat-num {
             color: var(--warning-color);
         }
@@ -163,30 +202,65 @@
             color: var(--danger-color);
         }
 
-
         /* --- 3. 列表区域 --- */
         .student-list {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 10px 12px 120px 12px;
-            /* 增加底部padding，防止被底部栏遮挡 */
             padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .student-card-container {
+            position: relative;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .student-card-actions {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100%;
+            display: flex;
+            z-index: 1;
+        }
+
+        .swipe-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            width: 65px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-undo {
+            background: #b0b0b0;
+        }
+
+        .btn-leave {
+            background: var(--danger-color);
         }
 
         .student-card {
             background: #fff;
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
             border: 1px solid rgba(0, 0, 0, 0.03);
-            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
         }
 
-        /* 请假样式 */
         .student-card.leave {
             background: #fff5f5;
             border: 1px dashed #ffccc7;
@@ -261,19 +335,16 @@
             color: #ccc;
         }
 
-        /* 状态样式 */
         .status-container[data-status="0"] .status-ball {
             border-color: #ddd;
         }
 
-        /* 待接 */
         .status-container[data-status="1"] .status-ball {
             background: var(--warning-color);
             border-color: var(--warning-color);
             box-shadow: 0 0 0 3px rgba(255, 184, 0, 0.2);
         }
 
-        /* 途中 */
         .status-container[data-status="1"] .status-text {
             color: var(--warning-color);
             font-weight: bold;
@@ -284,7 +355,6 @@
             border-color: var(--primary-color);
         }
 
-        /* 入班 */
         .status-container[data-status="2"] .status-text {
             color: var(--primary-color);
             font-weight: bold;
@@ -296,7 +366,6 @@
             position: relative;
         }
 
-        /* 请假 */
         .status-container[data-status="3"] .status-ball::after {
             content: '×';
             color: var(--danger-color);
@@ -313,13 +382,10 @@
 
         /* 底部操作栏 */
         .bottom-actions {
-            position: fixed;
-            /* 改用fixed定位 */
+            position: absolute;
             bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
             width: 100%;
-            max-width: 414px;
             height: auto;
             min-height: 70px;
             background: #fff;
@@ -327,7 +393,6 @@
             display: flex;
             padding: 10px 15px;
             padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-            /* 安全区域适配 */
             align-items: center;
             gap: 15px;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
@@ -355,34 +420,7 @@
             box-shadow: 0 4px 12px rgba(7, 193, 96, 0.3);
         }
 
-        /* 长按菜单 */
-        #context-menu {
-            position: absolute;
-            background: rgba(50, 50, 50, 0.95);
-            backdrop-filter: blur(10px);
-            color: #fff;
-            border-radius: 12px;
-            display: none;
-            z-index: 100;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 160px;
-        }
-
-        .ctx-item {
-            padding: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .ctx-item:active {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .ctx-item:last-child {
-            border-bottom: none;
-        }
+        /* 长按菜单已废除，改为左滑交互 */
 
         /* 学生选择弹窗 */
         .picker-overlay {
@@ -503,6 +541,769 @@
             color: #ccc;
             font-size: 18px;
         }
+
+        /* --- Tab 2/3 特定样式 --- */
+        .tab2-container,
+        .tab3-container {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .select-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .select-btn {
+            padding: 6px 15px;
+            border-radius: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .select-btn.active {
+            background: #e6ffeb;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+
+
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+
+
+        /* --- Tab 3 新版样式：学生列表卡片 --- */
+        .t3-filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .t3-filter-bar select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #333;
+            background: #fff;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .t3-student-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: fadeSlideIn 0.3s ease;
+        }
+
+        .t3-card-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-size: cover;
+            background-color: #eee;
+            flex-shrink: 0;
+        }
+
+        .t3-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .t3-card-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .t3-card-school {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .t3-card-tags {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .t3-card-tags .mini-tag {
+            background: #f6ffed;
+            color: #52c41a;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .t3-card-actions {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .t3-status-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .t3-status-tag.pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .t3-status-tag.sent {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .t3-status-tag.draft {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
+        }
+
+        .t3-action-btn {
+            padding: 6px 14px;
+            border-radius: 18px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .t3-action-btn.primary {
+            background: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(7, 193, 96, 0.25);
+        }
+
+        .t3-action-btn.primary:active {
+            transform: scale(0.95);
+        }
+
+        .t3-action-btn.secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        /* --- Tab 3 新版样式：综合归档弹窗 --- */
+        .archive-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .archive-overlay.show {
+            display: flex;
+        }
+
+        .archive-sheet {
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 20px 18px 30px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .archive-title {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 18px;
+            color: #333;
+        }
+
+        .archive-section {
+            margin-bottom: 18px;
+        }
+
+        .archive-section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        /* 作业核对 Toggle */
+        .task-check-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+
+        .task-check-text {
+            font-size: 13px;
+            color: #333;
+            flex: 1;
+        }
+
+        .task-check-toggle {
+            display: flex;
+            gap: 4px;
+        }
+
+        .task-check-toggle span {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .task-check-toggle .done {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .task-check-toggle .done.inactive {
+            background: #f0f0f0;
+            color: #999;
+        }
+
+        .task-check-toggle .undone {
+            background: #ff4d4f;
+            color: #fff;
+        }
+
+        .task-check-toggle .undone.inactive {
+            background: #f0f0f0;
+            color: #999;
+        }
+
+        /* 错题附件预览 */
+        .photo-preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .photo-preview-thumb {
+            width: 72px;
+            height: 72px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            border: 1px solid #eee;
+        }
+
+        .photo-preview-thumb .remove-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ff4d4f;
+            color: #fff;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .photo-preview-thumb .photo-subject-badge {
+            position: absolute;
+            bottom: 0px;
+            right: 0px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 4px;
+            border-top-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .photo-add-btn {
+            width: 72px;
+            height: 72px;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #999;
+            cursor: pointer;
+            gap: 2px;
+        }
+
+        .photo-add-btn:active {
+            background: #f5f5f5;
+        }
+
+        /* 综合表现标签选择 */
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-option {
+            padding: 6px 14px;
+            border-radius: 18px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .tag-option.selected {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-color: #91d5ff;
+        }
+
+        .archive-submit-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 3px 12px rgba(7, 193, 96, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .archive-submit-btn:active {
+            transform: scale(0.97);
+        }
+
+        .archive-cancel-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .archive-no-task {
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+            padding: 12px;
+        }
+
+        .archive-perfect-badge {
+            text-align: center;
+            padding: 16px;
+            font-size: 14px;
+            color: #faad14;
+            background: #fffbe6;
+            border-radius: 8px;
+        }
+
+        /* --- Tab 2 新版样式：科目选择器 --- */
+        .subject-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .subject-tag {
+            padding: 7px 16px;
+            border-radius: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .subject-tag.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(7, 193, 96, 0.25);
+        }
+
+        .subject-tag.add-subject {
+            background: #f8f8f8;
+            border: 1px dashed #ccc;
+            color: #999;
+        }
+
+        .subject-tag.add-subject:active {
+            background: #eee;
+        }
+
+        /* --- Tab 2 新版样式：消息式输入区 --- */
+        .hw-input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .hw-input-row input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 22px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .hw-input-row input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(7, 193, 96, 0.1);
+        }
+
+        .hw-send-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(7, 193, 96, 0.3);
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        .hw-send-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* --- Tab 2 新版样式：今日清单 --- */
+        .hw-list-header {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .hw-list-header small {
+            font-weight: normal;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .hw-list {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .hw-list-empty {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            padding: 24px;
+        }
+
+        .hw-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f5f5f5;
+            animation: fadeSlideIn 0.25s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hw-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .hw-item-content {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .hw-item-subject {
+            display: inline-block;
+            background: #e6f7ff;
+            color: #1890ff;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin-right: 6px;
+            font-weight: 500;
+        }
+
+        .hw-item-delete {
+            color: var(--danger-color);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        .hw-item-delete:active {
+            background: #fff0f0;
+        }
+
+        /* --- Tab 2 新版样式：附件图片区 --- */
+        .hw-images {
+            margin-bottom: 30px;
+        }
+
+        .hw-images-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .hw-image-upload {
+            width: 80px;
+            height: 80px;
+            border: 1px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fafafa;
+            transition: all 0.2s;
+            font-size: 11px;
+            color: #999;
+            gap: 2px;
+        }
+
+        .hw-image-upload:active {
+            background: #f0f0f0;
+            border-color: #aaa;
+        }
+
+        .hw-image-upload .upload-icon {
+            font-size: 24px;
+        }
+
+        .hw-image-thumb {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .hw-image-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hw-image-thumb .remove-btn {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* --- Tab 2 新版样式：自定义科目弹窗 --- */
+        .custom-subject-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .custom-subject-popup.show {
+            display: flex;
+        }
+
+        .popup-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            width: 280px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+            animation: popIn 0.2s ease;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .popup-card h4 {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .popup-card input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        .popup-card input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .popup-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .popup-btns button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .popup-btns .btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .popup-btns .btn-confirm {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        /* --- Tab 2 分隔线 --- */
+        .hw-divider {
+            height: 1px;
+            background: #eee;
+            margin: 15px 0;
+        }
     </style>
 </head>
 
@@ -512,11 +1313,7 @@
 
         <div id="toast">提示信息</div>
 
-        <div id="context-menu">
-            <div class="ctx-item" onclick="setStudentStatus(currentLongPressId, 3)">⛔ 标记为请假</div>
-            <div class="ctx-item" onclick="setStudentStatus(currentLongPressId, 0)">↩️ 撤销/重置</div>
-        </div>
-
+        <!-- 改为侧滑菜单卡片，取消长按菜单节点 -->
         <!-- 学生选择弹窗 -->
         <div class="picker-overlay" id="studentPicker">
             <div class="picker-sheet">
@@ -524,46 +1321,197 @@
                     <span class="picker-title">📷 选择学生拍作业</span>
                     <span class="picker-close" onclick="closeStudentPicker()">×</span>
                 </div>
-                <div class="picker-list" id="pickerList">
-                    <!-- 动态生成 -->
-                </div>
+                <div class="picker-list" id="pickerList"></div>
             </div>
         </div>
 
+        <!-- 顶部导航栏 -->
         <div class="navbar">
             <span style="position:absolute;left:15px;cursor:pointer;font-size:18px;" onclick="goBack()">←</span>
             <span id="className">一年级托管班</span>
         </div>
 
-        <div class="stats-tabs">
-            <div class="tab-item active" data-filter="all" onclick="switchTab('all')">
-                <span class="stat-num" id="cnt-all">20</span>
-                <span class="stat-label">全部</span>
+        <!-- 页面主Tab导航 -->
+        <div class="main-tabs">
+            <div class="main-tab active" onclick="switchMainTab(1)">📍 点名</div>
+            <div class="main-tab" onclick="switchMainTab(2)">📝 作业</div>
+            <div class="main-tab" onclick="switchMainTab(3)">📷 错题</div>
+        </div>
+
+        <!-- ========== TAB 1: 点名签到 ========== -->
+        <div id="tab1" class="tab-content active">
+            <div class="stats-tabs">
+                <div class="tab-item active" data-filter="all" onclick="switchTab('all')">
+                    <span class="stat-num" id="cnt-all">20</span>
+                    <span class="stat-label">全部</span>
+                </div>
+                <div class="tab-item" data-filter="0" onclick="switchTab(0)">
+                    <span class="stat-num" id="cnt-0">20</span>
+                    <span class="stat-label">待接</span>
+                </div>
+                <div class="tab-item" data-filter="1" onclick="switchTab(1)">
+                    <span class="stat-num" id="cnt-1">0</span>
+                    <span class="stat-label">途中</span>
+                </div>
+                <div class="tab-item" data-filter="2" onclick="switchTab(2)">
+                    <span class="stat-num" id="cnt-2">0</span>
+                    <span class="stat-label">入班</span>
+                </div>
+                <div class="tab-item" data-filter="3" onclick="switchTab(3)">
+                    <span class="stat-num" id="cnt-3">0</span>
+                    <span class="stat-label">请假</span>
+                </div>
             </div>
-            <div class="tab-item" data-filter="0" onclick="switchTab(0)">
-                <span class="stat-num" id="cnt-0">20</span>
-                <span class="stat-label">待接</span>
-            </div>
-            <div class="tab-item" data-filter="1" onclick="switchTab(1)">
-                <span class="stat-num" id="cnt-1">0</span>
-                <span class="stat-label">途中</span>
-            </div>
-            <div class="tab-item" data-filter="2" onclick="switchTab(2)">
-                <span class="stat-num" id="cnt-2">0</span>
-                <span class="stat-label">入班</span>
-            </div>
-            <div class="tab-item" data-filter="3" onclick="switchTab(3)">
-                <span class="stat-num" id="cnt-3">0</span>
-                <span class="stat-label">请假</span>
+
+            <div class="student-list" id="list-container"></div>
+
+            <div class="bottom-actions">
+                <button class="action-btn btn-left" onclick="showStudentPicker()">📷 拍作业</button>
+                <button class="action-btn btn-right" onclick="oneKeyArrive()">✅ 一键全部入班</button>
             </div>
         </div>
 
-        <div class="student-list" id="list-container">
+        <!-- ========== TAB 2: 作业录入 (无感保存版) ========== -->
+        <div id="tab2" class="tab-content">
+            <div class="tab2-container">
+                <!-- 1. 目标学校 -->
+                <div class="section-title">🏷️ 1. 目标学校</div>
+                <div class="select-group" id="school-select"></div>
+
+                <!-- 2. 目标班级 -->
+                <div class="section-title">🏷️ 2. 目标班级</div>
+                <div class="select-group" id="class-select"></div>
+
+                <div style="font-size: 12px; color: #999; margin-bottom: 10px;">
+                    👥 包含学生: <span id="student-names-preview">...</span>
+                </div>
+
+                <div class="hw-divider"></div>
+
+                <!-- 3. 快速录入区 -->
+                <div class="section-title">📝 3. 快速录入区</div>
+
+                <!-- 科目选择器 - 平铺标签，单选 -->
+                <div class="subject-selector" id="subject-selector">
+                    <div class="subject-tag active" data-subject="语文">语文</div>
+                    <div class="subject-tag" data-subject="数学">数学</div>
+                    <div class="subject-tag" data-subject="英语">英语</div>
+                    <div class="subject-tag add-subject" onclick="showCustomSubjectPopup()">➕</div>
+                </div>
+
+                <!-- 消息式输入行 -->
+                <div class="hw-input-row">
+                    <input type="text" id="hw-input" placeholder="请输入作业要求..." maxlength="30"
+                        onkeydown="if(event.key==='Enter') addHomework()">
+                    <button class="hw-send-btn" onclick="addHomework()">🚀</button>
+                </div>
+
+                <div class="hw-divider"></div>
+
+                <!-- 今日清单 -->
+                <div class="hw-list-header">
+                    📋 今日清单 <small id="hw-list-context"></small>
+                </div>
+                <div class="hw-list" id="hw-list-display">
+                    <div class="hw-list-empty">暂无作业</div>
+                </div>
+
+                <!-- 附件原图 -->
+                <div class="section-title">📎 附件原图 <small
+                        style="font-weight:normal;color:#999;font-size:12px;">（最多9张）</small></div>
+                <div class="hw-images">
+                    <div class="hw-images-grid" id="hw-images-grid">
+                        <div class="hw-image-upload" onclick="triggerImageUpload()">
+                            <span class="upload-icon">📷</span>
+                            <span>拍黑板/截图</span>
+                        </div>
+                    </div>
+                    <input type="file" id="hw-image-input" accept="image/*" multiple style="display:none"
+                        onchange="handleImageUpload(event)">
+                </div>
+
+                <!-- 页面触底，无全局保存/发布按钮 -->
+            </div>
         </div>
 
-        <div class="bottom-actions">
-            <button class="action-btn btn-left" onclick="showStudentPicker()">📷 拍作业</button>
-            <button class="action-btn btn-right" onclick="oneKeyArrive()">✅ 一键全部入班</button>
+        <!-- 自定义科目弹窗 -->
+        <div class="custom-subject-popup" id="customSubjectPopup">
+            <div class="popup-card">
+                <h4>✏️ 添加自定义科目</h4>
+                <input type="text" id="custom-subject-input" placeholder="输入科目名称..." maxlength="10"
+                    onkeydown="if(event.key==='Enter') addCustomSubject()">
+                <div class="popup-btns">
+                    <button class="btn-cancel" onclick="closeCustomSubjectPopup()">取消</button>
+                    <button class="btn-confirm" onclick="addCustomSubject()">确认</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TAB 3: 错题反馈 ========== -->
+        <div id="tab3" class="tab-content">
+            <div class="tab3-container">
+                <!-- 筛选栏 -->
+                <div class="t3-filter-bar">
+                    <select id="t3-school-filter" onchange="renderTab3List()">
+                        <option value="all">全部学校</option>
+                    </select>
+                    <select id="t3-status-filter" onchange="renderTab3List()">
+                        <option value="all">全部状态</option>
+                        <option value="pending">待拍照</option>
+                        <option value="draft">已存草稿</option>
+                        <option value="sent">已发送</option>
+                    </select>
+                </div>
+
+                <!-- 学生列表 -->
+                <div id="t3-student-cards"></div>
+            </div>
+
+            <!-- 综合归档弹窗 -->
+            <div class="archive-overlay" id="archiveOverlay">
+                <div class="archive-sheet">
+                    <div class="archive-title" id="archiveModalTitle">📦 确认作业归档</div>
+
+                    <!-- 1. 今日作业核对 -->
+                    <div class="archive-section">
+                        <div class="archive-section-title">【1. 今日作业核对】</div>
+                        <div id="archiveTaskCheck"></div>
+                    </div>
+
+                    <!-- 2. 错题附件 -->
+                    <div class="archive-section">
+                        <div class="archive-section-title">【2. 错题附件】</div>
+                        <div class="photo-preview-grid" id="archivePhotoGrid"></div>
+                        <input type="file" id="t3-photo-input" accept="image/*" multiple style="display:none"
+                            onchange="handleTab3Photos(event)">
+                    </div>
+
+                    <!-- 3. 综合表现 -->
+                    <div class="archive-section">
+                        <div class="archive-section-title">【3. 综合表现】</div>
+                        <div class="tag-selector" id="archiveTagSelector">
+                            <div class="tag-option" onclick="toggleArchiveTag(this)">👍 书写工整</div>
+                            <div class="tag-option" onclick="toggleArchiveTag(this)">⚡ 速度快</div>
+                            <div class="tag-option" onclick="toggleArchiveTag(this)">🐢 有点拖拉</div>
+                            <div class="tag-option" onclick="toggleArchiveTag(this)">🧐 粗心大意</div>
+                            <div class="tag-option" onclick="toggleArchiveTag(this)">🧠 思路清晰</div>
+                        </div>
+                    </div>
+
+                    <!-- 4. 老师留言 -->
+                    <div class="archive-section">
+                        <div class="archive-section-title">【4. 老师留言】</div>
+                        <input type="text" id="archiveComment" placeholder="选填：输入想对家长说的话..."
+                            style="width:100%; padding:10px 12px; border:1px solid #eee; border-radius:8px; font-size:13px; outline:none;">
+                    </div>
+
+                    <!-- 提交 -->
+                    <div id="archiveFileHint"
+                        style="text-align:center; color:#999; font-size:12px; margin-bottom:10px;"></div>
+                    <button class="archive-submit-btn" onclick="submitReport()">🚀 生成报告并发送给家长</button>
+                    <button class="archive-cancel-btn" onclick="closeArchiveModal()">取消</button>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -572,55 +1520,31 @@
         // 获取URL参数
         const urlParams = new URLSearchParams(window.location.search);
         const currentClass = urlParams.get('class') || '一年级托管班';
-
-        // 初始化班级名称
         document.getElementById('className').innerText = currentClass;
 
-        // 返回首页
-        function goBack() {
-            window.location.href = 'teacher-home.html';
-        }
+        function goBack() { window.location.href = 'teacher-home.html'; }
 
-        // 打开相机（必须指定学生）
         function openCamera(studentId, studentName) {
-            if (!studentId || !studentName) {
-                showToast('请先选择学生');
-                return;
-            }
+            if (!studentId || !studentName) { showToast('请先选择学生'); return; }
             window.location.href = `camera.html?id=${studentId}&name=${encodeURIComponent(studentName)}`;
         }
 
-        // 显示学生选择弹窗
-        function showStudentPicker() {
-            renderPickerList();
-            document.getElementById('studentPicker').classList.add('show');
-        }
+        function showStudentPicker() { renderPickerList(); document.getElementById('studentPicker').classList.add('show'); }
+        function closeStudentPicker() { document.getElementById('studentPicker').classList.remove('show'); }
 
-        // 关闭学生选择弹窗
-        function closeStudentPicker() {
-            document.getElementById('studentPicker').classList.remove('show');
-        }
-
-        // 渲染学生选择列表
         function renderPickerList() {
             const container = document.getElementById('pickerList');
             container.innerHTML = '';
-
-            // 过滤掉请假的学生，请假学生无法拍作业
             const availableStudents = students.filter(s => s.status !== 3);
-
             if (availableStudents.length === 0) {
                 container.innerHTML = '<div style="text-align:center; color:#999; padding: 40px 0;">暂无可拍摄的学生</div>';
                 return;
             }
-
             availableStudents.forEach(stu => {
                 let statusText = '待接';
                 if (stu.status === 1) statusText = '途中';
                 if (stu.status === 2) statusText = '入班';
-
                 const photoInfo = stu.photos > 0 ? `已归档 ${stu.photos} 张` : '未拍作业';
-
                 const html = `
                     <div class="picker-item" onclick="selectStudentForPhoto(${stu.id}, '${stu.name}')">
                         <div class="picker-avatar" style="background-image: url('${stu.avatar}')"></div>
@@ -635,48 +1559,59 @@
             });
         }
 
-        // 选择学生后进入相机
         function selectStudentForPhoto(studentId, studentName) {
             closeStudentPicker();
             openCamera(studentId, studentName);
         }
 
-        // Mock Data
+        // Mock Data — 学生带学校/班级维度，支撑 Tab 2 的二级联动
         const students = [
-            { id: 1, name: "谭圣涵", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=1", status: 0, photos: 0 },
-            { id: 2, name: "覃贰", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=2", status: 0, photos: 5 },
-            { id: 3, name: "李梓诺", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=3", status: 0, photos: 0 },
-            { id: 4, name: "王大锤", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=4", status: 0, photos: 0 },
-            { id: 5, name: "张小花", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=5", status: 0, photos: 0 },
-            { id: 6, name: "赵铁柱", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=6", status: 3, photos: 0 }, // 默认有一个请假
+            { id: 1, name: "谭圣涵", school: "育才小学", schoolClass: "1.1班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=1", status: 2, photos: 0 },
+            { id: 2, name: "覃贰", school: "育才小学", schoolClass: "1.1班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=2", status: 2, photos: 5 },
+            { id: 3, name: "李梓诺", school: "育才小学", schoolClass: "1.5班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=3", status: 0, photos: 0 },
+            { id: 4, name: "王大锤", school: "实验小学", schoolClass: "2.1班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=4", status: 2, photos: 0 },
+            { id: 5, name: "张小花", school: "实验小学", schoolClass: "2.1班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=5", status: 0, photos: 0 },
+            { id: 6, name: "赵铁柱", school: "实验小学", schoolClass: "2.3班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=6", status: 3, photos: 0 },
+            { id: 7, name: "马震凯", school: "橡树湾小学", schoolClass: "3.2班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=7", status: 0, photos: 0 },
+            { id: 8, name: "刘思琪", school: "橡树湾小学", schoolClass: "3.2班", avatar: "https://api.dicebear.com/7.x/miniavs/svg?seed=8", status: 2, photos: 3 },
         ];
 
-        let currentFilter = 'all'; // 当前选中的 Tab
+        // 用于 Tab 2 ：当前选中的学校和班级
+        let selectedSchool = null;
+        let selectedClass = null;
+
+        let currentFilter = 'all';
         let currentLongPressId = null;
         let pressTimer = null;
 
-        // --- 核心逻辑: 渲染与筛选 ---
+        // ========== 页面主Tab切换 ==========
+        function switchMainTab(index) {
+            document.querySelectorAll('.main-tab').forEach((el, i) => {
+                el.classList.toggle('active', i === index - 1);
+            });
+            document.querySelectorAll('.tab-content').forEach((el, i) => {
+                el.classList.toggle('active', i === index - 1);
+            });
+            if (index === 2) initTab2();
+            if (index === 3) initTab3();
+        }
+
+        // ========== Tab 1: 点名签到逻辑 ==========
         function render() {
             const container = document.getElementById('list-container');
             container.innerHTML = '';
-
-            // 1. 先统计所有状态的数量
             const counts = { all: students.length, 0: 0, 1: 0, 2: 0, 3: 0 };
             students.forEach(s => counts[s.status]++);
-
-            // 2. 更新顶部数字
             document.getElementById('cnt-all').innerText = counts.all;
             document.getElementById('cnt-0').innerText = counts[0];
             document.getElementById('cnt-1').innerText = counts[1];
             document.getElementById('cnt-2').innerText = counts[2];
             document.getElementById('cnt-3').innerText = counts[3];
 
-            // 3. 根据当前 Filter 筛选列表
             let displayList = students;
             if (currentFilter !== 'all') {
                 displayList = students.filter(s => s.status === currentFilter);
             } else {
-                // 如果是“全部”视图，把请假的人沉底（排到最后），避免干扰正常接送
                 displayList = [...students].sort((a, b) => {
                     if (a.status === 3 && b.status !== 3) return 1;
                     if (a.status !== 3 && b.status === 3) return -1;
@@ -684,7 +1619,6 @@
                 });
             }
 
-            // 4. 渲染 DOM
             if (displayList.length === 0) {
                 container.innerHTML = `<div style="text-align:center; color:#999; margin-top:50px; font-size:14px;">暂无该状态学生</div>`;
                 return;
@@ -696,136 +1630,955 @@
                 if (stu.status === 1) statusText = "途中";
                 if (stu.status === 2) statusText = "入班";
                 if (stu.status === 3) statusText = "请假";
-
                 const html = `
-                <div class="student-card ${isLeave ? 'leave' : ''}" id="card-${stu.id}">
-                    <div class="stu-left" onclick="viewProfile(${stu.id}, '${stu.name}')" style="cursor:pointer;">
-                        <div class="avatar" style="background-image: url('${stu.avatar}')"></div>
-                        <div class="stu-info">
-                            <h3>${stu.name}</h3>
-                            <div class="stu-tags">
-                                <span class="${stu.photos > 0 ? 'done' : ''}">${stu.photos > 0 ? '已归档' : '未拍作业'}</span>
+                <div class="student-card-container">
+                    <div class="student-card-actions">
+                        <div class="swipe-action-btn btn-undo" onclick="setStudentStatus(${stu.id}, 0)">撤销</div>
+                        <div class="swipe-action-btn btn-leave" onclick="setStudentStatus(${stu.id}, 3)">请假</div>
+                    </div>
+                    <div class="student-card ${isLeave ? 'leave' : ''}" id="card-${stu.id}"
+                         ontouchstart="handleSwipeStart(event, this)"
+                         ontouchmove="handleSwipeMove(event, this)"
+                         ontouchend="handleSwipeEnd(event, this)"
+                         onmousedown="handleSwipeStart(event, this)"
+                         onmousemove="handleSwipeMove(event, this)"
+                         onmouseup="handleSwipeEnd(event, this)"
+                         onmouseleave="handleSwipeEnd(event, this)">
+                        <div class="stu-left" data-id="${stu.id}" data-name="${stu.name}" style="cursor:pointer;">
+                            <div class="avatar" style="background-image: url('${stu.avatar}')"></div>
+                            <div class="stu-info">
+                                <h3>${stu.name}</h3>
+                                <div class="stu-tags">
+                                    <span class="${stu.photos > 0 ? 'done' : ''}">${stu.photos > 0 ? '已归档' : '未拍作业'}</span>
+                                </div>
                             </div>
                         </div>
+                        <div class="status-container" data-status="${stu.status}" onclick="toggleStatus(${stu.id})">
+                            <div class="status-ball"></div>
+                            <div class="status-text">${statusText}</div>
+                        </div>
                     </div>
-                    
-                    <div class="status-container" data-status="${stu.status}"
-                         ontouchstart="handleTouchStart(${stu.id})" 
-                         ontouchend="handleTouchEnd(${stu.id})"
-                         onmousedown="handleTouchStart(${stu.id})" 
-                         onmouseup="handleTouchEnd(${stu.id})"
-                    >
-                        <div class="status-ball"></div>
-                        <div class="status-text">${statusText}</div>
-                    </div>
-                </div>
-            `;
+                </div>`;
                 container.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        // --- Tab 切换逻辑 ---
         function switchTab(filter) {
             currentFilter = filter;
-
-            // UI 高亮更新
             document.querySelectorAll('.tab-item').forEach(el => {
                 el.classList.remove('active');
-                // 数据类型转换比较 (HTML attribute 是 string)
                 if (el.dataset.filter == filter) el.classList.add('active');
             });
-
             render();
         }
 
-        // --- 状态球逻辑 (点按 & 长按) ---
-        function handleTouchStart(id) {
-            currentLongPressId = id;
-            pressTimer = setTimeout(() => {
-                showContextMenu();
-                pressTimer = null;
-            }, 600);
+        // --- 滑动交互逻辑 ---
+        let swipeStartX = 0;
+        let swipeCurrentX = 0;
+        let activeSwipeCard = null;
+        let isSwiping = false;
+        // NOTE: hasMoved 在 move 阶段置 true，在下一次 start 才重置，不依赖任何定时器
+        let hasMoved = false;
+        // NOTE: 记录拖拽开始时卡片已有的偏移量，用于支持已展开卡片的右滑归位
+        let swipeBaseOffset = 0;
+
+        function handleSwipeStart(e, el) {
+            // 如果点击的是状态球，则不触发滑动（保留点击切换状态的行为）
+            if (e.target.closest('.status-container')) return;
+
+            swipeStartX = e.touches ? e.touches[0].clientX : e.clientX;
+            swipeCurrentX = swipeStartX;
+            isSwiping = true;
+            hasMoved = false;
+
+            // 读取卡片当前的 translateX 作为拖拽起始偏移
+            const match = el.style.transform.match(/translateX\((.+?)px\)/);
+            swipeBaseOffset = match ? parseFloat(match[1]) : 0;
+
+            // 关闭其他已打开的卡片
+            if (activeSwipeCard && activeSwipeCard !== el) {
+                activeSwipeCard.style.transform = 'translateX(0)';
+                activeSwipeCard = null;
+            }
+            el.style.transition = 'none'; // 拖动时移除动画过渡
         }
 
-        function handleTouchEnd(id) {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                toggleStatus(id);
+        function handleSwipeMove(e, el) {
+            if (!isSwiping) return;
+            swipeCurrentX = e.touches ? e.touches[0].clientX : e.clientX;
+            let dragDelta = swipeCurrentX - swipeStartX;
+
+            // 只要横向位移超过 5px 就标记为“已滑动”，拦截后续 click
+            if (Math.abs(dragDelta) > 5) hasMoved = true;
+
+            // 避免外层滚动
+            if (Math.abs(dragDelta) > 10) {
+                if (e.cancelable) e.preventDefault();
             }
-            pressTimer = null;
+
+            // 实际偏移 = 已有偏移 + 本次拖拽距离
+            let totalOffset = swipeBaseOffset + dragDelta;
+
+            // 限制范围：不能向右超出原位，向左最多 130px + 阻尼
+            if (totalOffset > 0) totalOffset = 0;
+            if (totalOffset < -130) {
+                totalOffset = -130 + (totalOffset + 130) * 0.2;
+            }
+
+            el.style.transform = `translateX(${totalOffset}px)`;
+        }
+
+        function handleSwipeEnd(e, el) {
+            if (!isSwiping) return;
+            isSwiping = false;
+            el.style.transition = 'transform 0.3s ease';
+
+            // 最终偏移量 = 基础偏移 + 本次拖拽距离
+            let totalOffset = swipeBaseOffset + (swipeCurrentX - swipeStartX);
+
+            // 吸附判定：偏移超过 -50 就展开，否则归位
+            if (totalOffset < -50) {
+                el.style.transform = 'translateX(-130px)';
+                activeSwipeCard = el;
+            } else {
+                el.style.transform = 'translateX(0)';
+                if (activeSwipeCard === el) activeSwipeCard = null;
+
+                // NOTE: 只有在没有发生任何滑动的纯点击下，才触发进入详情页
+                if (!hasMoved) {
+                    const stuLeft = (e.target || e.srcElement).closest('.stu-left');
+                    if (stuLeft) {
+                        const id = parseInt(stuLeft.dataset.id);
+                        const name = stuLeft.dataset.name;
+                        viewProfile(id, name);
+                    }
+                }
+            }
         }
 
         function toggleStatus(id) {
-            const stu = students.find(s => s.id === id);
-            if (stu.status === 3) {
-                showToast('请长按以撤销请假状态');
+            if (hasMoved) return;
+
+            // 如果当前有卡片滑开，点击状态球仅收起卡片，不切换状态
+            if (activeSwipeCard) {
+                activeSwipeCard.style.transform = 'translateX(0)';
+                activeSwipeCard = null;
                 return;
             }
 
-            // 0->1->2->0 循环
+            const stu = students.find(s => s.id === id);
+            if (stu.status === 3) { showToast('当前为请假状态，请向左滑动并点击"撤销"'); return; }
+            if (stu.status === 2) { showToast('该学生已入班，若需修改状态请向左滑动点击"撤销"'); return; }
+
             let next = 0;
             if (stu.status === 0) next = 1;
             else if (stu.status === 1) next = 2;
-            else if (stu.status === 2) next = 0;
 
             stu.status = next;
-
-            // 如果当前还在筛选视图中，为了防止卡片突然消失的突兀感，这里可以加个简单动画
-            // 简化版：直接渲染
             render();
             if (navigator.vibrate) navigator.vibrate(30);
-        }
-
-        // --- 长按菜单 & 请假逻辑 ---
-        function showContextMenu() {
-            const menu = document.getElementById('context-menu');
-            menu.style.display = 'block';
-            menu.style.top = '40%'; menu.style.left = '50%';
-            menu.style.transform = 'translate(-50%, -50%)';
-            if (navigator.vibrate) navigator.vibrate(50);
         }
 
         function setStudentStatus(id, status) {
             const stu = students.find(s => s.id === id);
             stu.status = status;
-            document.getElementById('context-menu').style.display = 'none';
 
-            // 如果设置了请假，且当前Tab不是请假，提示用户
-            if (status === 3 && currentFilter !== 3) {
-                showToast(`已标记 ${stu.name} 为请假`);
-            } else if (status === 0) {
-                showToast(`状态已重置`);
+            // 收到指令后，收起当前的滑动卡片
+            if (activeSwipeCard) {
+                activeSwipeCard.style.transform = 'translateX(0)';
+                activeSwipeCard = null;
             }
 
-            render();
+            if (status === 3 && currentFilter !== 3) showToast(`已标记 ${stu.name} 为请假`);
+            else if (status === 0) showToast(`状态已重置`);
+
+            // 增加一点点延迟让卡片归位动画走完再重刷dom
+            setTimeout(() => {
+                render();
+            }, 300);
         }
 
-        // --- 一键入班 ---
+        function viewProfile(id, name) {
+            // 跳转学生主页
+            showToast(`点击了 ${name} 的主页，可进入详情页`);
+        }
+
         function oneKeyArrive() {
             let count = 0;
-            students.forEach(s => {
-                if (s.status === 1) { s.status = 2; count++; }
+            students.forEach(s => { if (s.status === 1) { s.status = 2; count++; } });
+            if (count) { showToast(`✅ ${count} 人已确认入班`); render(); }
+            else showToast('暂无"途中"的学生');
+        }
+
+        // ========== Tab 2: 作业录入逻辑 (无感保存版) ==========
+        // NOTE: 使用 Map 以"学校+班级"为 key 隔离存储各组合的作业列表和图片列表
+        const homeworkDataStore = new Map();
+        let currentSubject = '语文';
+
+        /**
+         * 获取当前学校+班级的存储 key
+         * @returns 形如 "育才小学__全部班级" 的唯一标识
+         */
+        function getStoreKey() {
+            return `${selectedSchool}__${selectedClass || '全部班级'}`;
+        }
+
+        /**
+         * 获取当前学校+班级对应的作业数据（tasks + images）
+         * 若不存在则自动初始化
+         */
+        function getCurrentData() {
+            const key = getStoreKey();
+            if (!homeworkDataStore.has(key)) {
+                homeworkDataStore.set(key, { tasks: [], images: [] });
+            }
+            return homeworkDataStore.get(key);
+        }
+
+        function initTab2() {
+            const schools = [...new Set(students.map(s => s.school))];
+            selectedSchool = schools[0];
+            renderSchoolBtns(schools);
+            renderClassBtns();
+
+            // NOTE: 预设模拟数据，方便体验时直观查看效果
+            seedMockData();
+
+            refreshTab2Display();
+        }
+
+        /**
+         * 为各学校预填充模拟作业数据和附件截图
+         * 仅在 homeworkDataStore 为空时注入一次
+         */
+        function seedMockData() {
+            if (homeworkDataStore.size > 0) return;
+
+            // 育才小学 - 全部班级
+            homeworkDataStore.set('育才小学__全部班级', {
+                tasks: [
+                    { subject: '语文', content: '预习第20课《蜘蛛开店》，标注生字词' },
+                    { subject: '数学', content: '一张卷子，基本都上交了' },
+                    { subject: '英语', content: '背诵 Unit 6 单词，家长签字' },
+                    { subject: '语文', content: '抄写第19课词语，每个3遍' },
+                ],
+                images: [
+                    generateMockImage('语文作业 - 黑板拍照', '#4A90D9'),
+                    generateMockImage('数学卷子 - 参考答案', '#E8834A'),
+                ]
             });
-            if (count) {
-                showToast(`✅ ${count} 人已确认入班`);
-                render();
+
+            // 实验小学 - 全部班级
+            homeworkDataStore.set('实验小学__全部班级', {
+                tasks: [
+                    { subject: '数学', content: '练习册P45-46页，明天检查' },
+                    { subject: '英语', content: '听读课文3遍，打卡小程序' },
+                ],
+                images: []
+            });
+
+            // 橡树湾小学 - 全部班级
+            homeworkDataStore.set('橡树湾小学__全部班级', {
+                tasks: [
+                    { subject: '语文', content: '复习《古诗三首》并默写第一首' },
+                    { subject: '科学', content: '带一片不同形状的树叶到学校' }
+                ],
+                images: []
+            });
+        }
+
+        /**
+         * 生成一张带文字的模拟图片（Canvas -> DataURL）
+         * @param text 图片上显示的文字
+         * @param bgColor 背景色
+         */
+        function generateMockImage(text, bgColor) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            // 背景
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, 200, 200);
+            // 装饰线
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1;
+            for (let i = 30; i < 200; i += 25) {
+                ctx.beginPath();
+                ctx.moveTo(20, i);
+                ctx.lineTo(180, i);
+                ctx.stroke();
+            }
+            // 文字
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 100, 105);
+            // 角标
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText('模拟截图', 100, 185);
+            return canvas.toDataURL('image/png');
+        }
+
+        function renderSchoolBtns(schools) {
+            document.getElementById('school-select').innerHTML = schools.map(s =>
+                `<div class="select-btn ${s === selectedSchool ? 'active' : ''}" onclick="selectSchool('${s}')">${s}</div>`
+            ).join('');
+        }
+
+        function selectSchool(school) {
+            selectedSchool = school;
+            selectedClass = null;
+            document.querySelectorAll('#school-select .select-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === school);
+            });
+            renderClassBtns();
+            // 数据隔离：切换时清空输入框，刷新显示
+            document.getElementById('hw-input').value = '';
+            refreshTab2Display();
+        }
+
+        function renderClassBtns() {
+            const classes = [...new Set(students.filter(s => s.school === selectedSchool).map(s => s.schoolClass))];
+            const allClasses = ['全部班级', ...classes];
+            selectedClass = selectedClass || '全部班级';
+            document.getElementById('class-select').innerHTML = allClasses.map(c =>
+                `<div class="select-btn ${c === selectedClass ? 'active' : ''}" onclick="selectClass('${c}')">${c}</div>`
+            ).join('');
+        }
+
+        function selectClass(cls) {
+            selectedClass = cls;
+            document.querySelectorAll('#class-select .select-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === cls);
+            });
+            // 数据隔离
+            document.getElementById('hw-input').value = '';
+            refreshTab2Display();
+        }
+
+        function getFilteredStudents() {
+            return students.filter(s => {
+                if (s.school !== selectedSchool) return false;
+                if (selectedClass && selectedClass !== '全部班级' && s.schoolClass !== selectedClass) return false;
+                return true;
+            });
+        }
+
+        function updatePreview() {
+            const filtered = getFilteredStudents();
+            const names = filtered.map(s => s.name).join(', ');
+            document.getElementById('student-names-preview').innerText = names || '无匹配学生';
+            // 更新清单标题上下文
+            const ctx = document.getElementById('hw-list-context');
+            if (ctx) ctx.innerText = `(${selectedSchool} - ${selectedClass || '全部班级'})`;
+        }
+
+        // --- 科目选择逻辑（单选 + 记忆）---
+        function selectSubject(el) {
+            document.querySelectorAll('#subject-selector .subject-tag').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            currentSubject = el.dataset.subject;
+        }
+
+        // 事件委托：科目标签点击
+        document.getElementById('subject-selector').addEventListener('click', (e) => {
+            const tag = e.target.closest('.subject-tag');
+            if (tag && !tag.classList.contains('add-subject') && tag.dataset.subject) {
+                selectSubject(tag);
+            }
+        });
+
+        // --- 自定义科目弹窗 ---
+        function showCustomSubjectPopup() {
+            document.getElementById('customSubjectPopup').classList.add('show');
+            const input = document.getElementById('custom-subject-input');
+            input.value = '';
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closeCustomSubjectPopup() {
+            document.getElementById('customSubjectPopup').classList.remove('show');
+        }
+
+        function addCustomSubject() {
+            const input = document.getElementById('custom-subject-input');
+            const name = input.value.trim();
+            if (!name) { showToast('请输入科目名'); return; }
+
+            // 检查是否已存在同名科目
+            const existing = document.querySelector(`#subject-selector .subject-tag[data-subject="${name}"]`);
+            if (existing) {
+                selectSubject(existing);
+                closeCustomSubjectPopup();
+                return;
+            }
+
+            // 在 ➕ 按钮前插入新标签
+            const addBtn = document.querySelector('.subject-tag.add-subject');
+            const newTag = document.createElement('div');
+            newTag.className = 'subject-tag';
+            newTag.dataset.subject = name;
+            newTag.textContent = name;
+            addBtn.parentNode.insertBefore(newTag, addBtn);
+
+            // 默认选中新标签
+            selectSubject(newTag);
+            closeCustomSubjectPopup();
+            showToast(`已添加科目「${name}」`);
+        }
+
+        // --- 无感自动保存：添加作业 ---
+        function addHomework() {
+            const input = document.getElementById('hw-input');
+            const content = input.value.trim();
+            if (!content) { showToast('请输入作业内容'); return; }
+
+            const data = getCurrentData();
+            data.tasks.push({ subject: currentSubject, content: content });
+
+            // 清空输入框，科目选中状态不重置
+            input.value = '';
+
+            // 静默保存（模拟 API 调用）
+            console.log('[AutoSave] 添加作业:', {
+                school: selectedSchool,
+                class: selectedClass,
+                subject: currentSubject,
+                content: content
+            });
+
+            renderHomeworkList();
+            showToast('已添加');
+        }
+
+        // --- 无感自动保存：删除作业（二次确认） ---
+        function deleteHomework(index) {
+            if (!confirm('确认删除该条作业记录？')) return;
+
+            const data = getCurrentData();
+            const removed = data.tasks.splice(index, 1);
+
+            // 静默保存
+            console.log('[AutoSave] 删除作业:', removed[0]);
+            renderHomeworkList();
+        }
+
+        /** 渲染今日清单列表 */
+        function renderHomeworkList() {
+            const container = document.getElementById('hw-list-display');
+            const data = getCurrentData();
+
+            if (data.tasks.length === 0) {
+                container.innerHTML = '<div class="hw-list-empty">暂无作业</div>';
+                return;
+            }
+
+            container.innerHTML = data.tasks.map((t, i) => `
+                <div class="hw-list-item">
+                    <div class="hw-item-content">
+                        <span>${i + 1}.</span>
+                        <span class="hw-item-subject">${t.subject}</span>
+                        ${t.content}
+                    </div>
+                    <span class="hw-item-delete" onclick="deleteHomework(${i})">[删]</span>
+                </div>
+            `).join('');
+        }
+
+        // --- 附件图片管理 ---
+        function triggerImageUpload() {
+            const data = getCurrentData();
+            if (data.images.length >= 9) {
+                showToast('最多上传 9 张图片');
+                return;
+            }
+            document.getElementById('hw-image-input').click();
+        }
+
+        function handleImageUpload(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            const data = getCurrentData();
+            const remaining = 9 - data.images.length;
+
+            Array.from(files).slice(0, remaining).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    data.images.push(e.target.result);
+                    console.log('[AutoSave] 上传附件图片, 当前共', data.images.length, '张');
+                    renderImages();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // 重置 input 以支持重复选择同一文件
+            event.target.value = '';
+        }
+
+        function removeImage(index) {
+            const data = getCurrentData();
+            data.images.splice(index, 1);
+            console.log('[AutoSave] 删除附件图片, 剩余', data.images.length, '张');
+            renderImages();
+        }
+
+        /** 渲染附件图片区 */
+        function renderImages() {
+            const container = document.getElementById('hw-images-grid');
+            const data = getCurrentData();
+
+            let html = '';
+            data.images.forEach((src, i) => {
+                html += `
+                    <div class="hw-image-thumb">
+                        <img src="${src}" alt="附件${i + 1}">
+                        <div class="remove-btn" onclick="removeImage(${i})">×</div>
+                    </div>
+                `;
+            });
+
+            // 未满 9 张时显示上传按钮
+            if (data.images.length < 9) {
+                html += `
+                    <div class="hw-image-upload" onclick="triggerImageUpload()">
+                        <span class="upload-icon">📷</span>
+                        <span>拍黑板/截图</span>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * 刷新 Tab 2 的清单和图片显示
+         * 切换学校/班级时调用，实现数据隔离
+         */
+        function refreshTab2Display() {
+            updatePreview();
+            renderHomeworkList();
+            renderImages();
+        }
+
+        // ========== Tab 3: 错题反馈逻辑 (重构版) ==========
+        // NOTE: dailyReports 存储每位学生今日的报告状态
+        //       key = studentId, value = { tags:[], comment:'', taskStatus:[], photos:[], isPerfect:bool }
+        const dailyReports = new Map();
+        // 草稿缓存池：老师在相机拍完照片后先存在这里，稍后再补充评语发送
+        // key = studentId, value = [{url, subject, timestamp}]
+        const draftPhotos = new Map();
+        let currentArchiveStudentId = null;
+        let archivePhotos = [];
+
+        function initTab3() {
+            // 填充学校筛选下拉
+            const schools = [...new Set(students.map(s => s.school))];
+            const schoolFilter = document.getElementById('t3-school-filter');
+            schoolFilter.innerHTML = '<option value="all">全部学校</option>' + schools.map(s => `<option value="${s}">${s}</option>`).join('');
+
+            // 注入模拟已发报告数据，方便体验
+            seedTab3MockData();
+
+            renderTab3List();
+        }
+
+        /**
+         * 预设 Tab 3 模拟数据（部分学生已归档）
+         * 仅在 dailyReports 为空时注入
+         */
+        function seedTab3MockData() {
+            if (dailyReports.size > 0) return;
+
+            // 覃贰 - 已发报告（有错题）
+            dailyReports.set(2, {
+                tags: ['👍 书写工整', '⚡ 速度快'],
+                comment: '今天数学进步很大！',
+                taskStatus: [{ subject: '语文', content: '预习第20课《蜘蛛开店》，标注生字词', done: true }, { subject: '数学', content: '一张卷子，基本都上交了', done: false }],
+                photos: ['mock1'],
+                isPerfect: false
+            });
+
+            // 刘思琪 - 已发报告（今日全对）
+            dailyReports.set(8, {
+                tags: ['👍 书写工整', '🧠 思路清晰'],
+                comment: '',
+                taskStatus: [],
+                photos: [],
+                isPerfect: true
+            });
+        }
+
+        /**
+         * 根据筛选条件渲染学生卡片列表
+         */
+        function renderTab3List() {
+            const schoolFilter = document.getElementById('t3-school-filter').value;
+            const statusFilter = document.getElementById('t3-status-filter').value;
+
+            // 核心业务防御：只允许已经被老师签收（“入班”）的学生出现
+            let list = students.filter(s => s.status === 2);
+
+            // 按学校筛选
+            if (schoolFilter !== 'all') {
+                list = list.filter(s => s.school === schoolFilter);
+            }
+
+            // 按状态筛选（三态）
+            if (statusFilter === 'pending') {
+                list = list.filter(s => !dailyReports.has(s.id) && !draftPhotos.has(s.id));
+            } else if (statusFilter === 'draft') {
+                list = list.filter(s => draftPhotos.has(s.id) && !dailyReports.has(s.id));
+            } else if (statusFilter === 'sent') {
+                list = list.filter(s => dailyReports.has(s.id));
+            }
+
+            const container = document.getElementById('t3-student-cards');
+
+            if (list.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#999; padding:40px 0; font-size:13px;">暂无匹配的学生</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(stu => {
+                const report = dailyReports.get(stu.id);
+                const draft = draftPhotos.get(stu.id);
+                const isSent = !!report;
+                const hasDraft = !!draft && draft.length > 0 && !isSent;
+
+                let statusHtml, actionHtml;
+
+                if (isSent) {
+                    // 🟢 已发送
+                    statusHtml = '<span class="t3-status-tag sent">✅ 已发</span>';
+                    const tagSummary = report.isPerfect
+                        ? '🎉 今日全对'
+                        : (report.tags.length > 0 ? report.tags.join(' ') : '已归档');
+                    actionHtml = `
+                        <div class="t3-card-tags"><span class="mini-tag">${tagSummary}</span></div>
+                        <button class="t3-action-btn secondary" onclick="editReport(${stu.id})">✏️ 修改</button>
+                    `;
+                } else if (hasDraft) {
+                    // 🟡 已存草稿
+                    statusHtml = `<span class="t3-status-tag draft">📎 ${draft.length}张待发送</span>`;
+                    actionHtml = `
+                        <button class="t3-action-btn primary" onclick="openDraftArchive(${stu.id})" style="background:#fa8c16;box-shadow:0 2px 8px rgba(250,140,22,0.3)">✏️ 完善并发送</button>
+                        <button class="t3-action-btn secondary" onclick="openArchiveFlow(${stu.id}, true)" style="margin-top:4px">🎉 全对</button>
+                    `;
+                } else {
+                    // 🔴 待拍照
+                    statusHtml = '<span class="t3-status-tag pending">未生成</span>';
+                    actionHtml = `
+                        <button class="t3-action-btn primary" onclick="openArchiveFlow(${stu.id}, false)">📷 去拍照</button>
+                        <button class="t3-action-btn secondary" onclick="openArchiveFlow(${stu.id}, true)" style="margin-top:4px">🎉 全对</button>
+                    `;
+                }
+
+                return `
+                    <div class="t3-student-card">
+                        <div class="t3-card-avatar" style="background-image:url('${stu.avatar}')"></div>
+                        <div class="t3-card-info">
+                            <div class="t3-card-name">${stu.name}</div>
+                            <div class="t3-card-school">${stu.school} ${stu.schoolClass}</div>
+                            ${isSent ? actionHtml.split('</div>')[0] + '</div>' : ''}
+                        </div>
+                        <div class="t3-card-actions">
+                            ${statusHtml}
+                            ${isSent ? `<button class="t3-action-btn secondary" onclick="editReport(${stu.id})">✏️ 修改</button>` : actionHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * 打开归档流程：先选照片（或直接全对），再弹归档弹窗
+         */
+        function openArchiveFlow(studentId, isPerfect) {
+            currentArchiveStudentId = studentId;
+            archivePhotos = [];
+
+            if (isPerfect) {
+                // 今日全对 - 直接弹弹窗无需选图
+                openArchiveModal(true);
             } else {
-                showToast('暂无“途中”的学生');
+                // 跳转到专门的相机页面进行拍摄
+                const stu = students.find(s => s.id === studentId);
+                if (stu) {
+                    window.location.href = `camera.html?id=${stu.id}&name=${encodeURIComponent(stu.name)}`;
+                }
             }
         }
 
+        /**
+         * 从草稿池读取照片，打开归档弹窗进行补录
+         * 老师点击“完善并发送”时触发
+         */
+        function openDraftArchive(studentId) {
+            const draft = draftPhotos.get(studentId);
+            if (!draft || draft.length === 0) {
+                showToast('没有找到草稿照片');
+                return;
+            }
+
+            currentArchiveStudentId = studentId;
+            archivePhotos = [...draft]; // 复制草稿照片到归档区
+            openArchiveModal(false);
+        }
+
+        /**
+         * 处理弹窗内的错题照片选择
+         */
+        function handleTab3Photos(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            let loaded = 0;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    archivePhotos.push(e.target.result);
+                    loaded++;
+                    if (loaded === files.length) {
+                        openArchiveModal(false);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            event.target.value = '';
+        }
+
+        /**
+         * 打开综合归档弹窗
+         * 核心：联动查找该学生对应的 assignments 数据
+         */
+        function openArchiveModal(isPerfect) {
+            const stu = students.find(s => s.id === currentArchiveStudentId);
+            if (!stu) return;
+
+            const titleEl = document.getElementById('archiveModalTitle');
+            const hintEl = document.getElementById('archiveFileHint');
+
+            if (isPerfect) {
+                titleEl.innerText = `🎉 确认全对归档 (${stu.name})`;
+                titleEl.style.color = '#faad14';
+                hintEl.innerText = '✨ 将生成表扬卡';
+            } else {
+                titleEl.innerText = `📦 确认作业归档 (${stu.name} - ${stu.school} ${stu.schoolClass})`;
+                titleEl.style.color = '#333';
+                if (archivePhotos.length > 0) {
+                    hintEl.innerText = `📄 已选择 ${archivePhotos.length} 张错题，准备生成 PDF`;
+                } else {
+                    hintEl.innerText = `📄 未抓拍错题，将生成纯评价报告`;
+                }
+            }
+
+            // 标记弹窗当前模式
+            document.getElementById('archiveOverlay').dataset.perfect = isPerfect ? '1' : '0';
+
+            // --- 1. 渲染作业核对 ---
+            renderArchiveTaskCheck(stu);
+
+            // --- 2. 渲染错题附件 ---
+            renderArchivePhotos(isPerfect);
+
+            // --- 3. 重置标签和留言 ---
+            document.querySelectorAll('#archiveTagSelector .tag-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('archiveComment').value = '';
+
+            // 全对模式默认选中 "书写工整"
+            if (isPerfect) {
+                const firstTag = document.querySelector('#archiveTagSelector .tag-option');
+                if (firstTag) firstTag.classList.add('selected');
+            }
+
+            document.getElementById('archiveOverlay').classList.add('show');
+        }
+
+        /**
+         * 联动渲染作业核对区
+         * 查找 homeworkDataStore 中该学生学校对应的 tasks
+         */
+        function renderArchiveTaskCheck(stu) {
+            const checkContainer = document.getElementById('archiveTaskCheck');
+
+            // 尝试匹配：先找 "学校__班级"，再找 "学校__全部班级"
+            const exactKey = `${stu.school}__${stu.schoolClass}`;
+            const allKey = `${stu.school}__全部班级`;
+            let matchedData = homeworkDataStore.get(exactKey) || homeworkDataStore.get(allKey);
+
+            if (!matchedData || matchedData.tasks.length === 0) {
+                checkContainer.innerHTML = '<div class="archive-no-task">今日该校无统一作业记录</div>';
+                return;
+            }
+
+            // 默认全部选中 ✅（降低操作成本）
+            checkContainer.innerHTML = matchedData.tasks.map((t, i) => `
+                <div class="task-check-item" data-index="${i}" data-done="true">
+                    <div class="task-check-text">${t.subject} - ${t.content}</div>
+                    <div class="task-check-toggle">
+                        <span class="done" onclick="setTaskDone(${i}, true)">✅完成</span>
+                        <span class="undone inactive" onclick="setTaskDone(${i}, false)">❌未完</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * 切换某条作业的完成状态
+         */
+        function setTaskDone(index, isDone) {
+            const item = document.querySelector(`.task-check-item[data-index="${index}"]`);
+            if (!item) return;
+            item.dataset.done = isDone ? 'true' : 'false';
+
+            const doneEl = item.querySelector('.done');
+            const undoneEl = item.querySelector('.undone');
+
+            if (isDone) {
+                doneEl.classList.remove('inactive');
+                undoneEl.classList.add('inactive');
+            } else {
+                doneEl.classList.add('inactive');
+                undoneEl.classList.remove('inactive');
+            }
+        }
+
+        /**
+         * 渲染错题附件预览区
+         */
+        function renderArchivePhotos(isPerfect) {
+            const grid = document.getElementById('archivePhotoGrid');
+
+            if (isPerfect) {
+                grid.innerHTML = '<div class="archive-perfect-badge">🎉 今日全对，无错题</div>';
+                return;
+            }
+
+            let html = archivePhotos.map((photoObj, i) => `
+                <div class="photo-preview-thumb" style="background-image:url('${photoObj.url}')">
+                    <div class="photo-subject-badge">${photoObj.subject}</div>
+                    <div class="remove-btn" onclick="removeArchivePhoto(${i})">×</div>
+                </div>
+            `).join('');
+
+            html += `<div class="photo-add-btn" onclick="document.getElementById('t3-photo-input').click()">
+                <span>📷</span><span>追加</span>
+            </div>`;
+
+            grid.innerHTML = html;
+        }
+
+        function removeArchivePhoto(index) {
+            archivePhotos.splice(index, 1);
+            const isPerfect = document.getElementById('archiveOverlay').dataset.perfect === '1';
+            renderArchivePhotos(isPerfect);
+
+            const hintEl = document.getElementById('archiveFileHint');
+            if (archivePhotos.length > 0) {
+                hintEl.innerText = `📄 已选择 ${archivePhotos.length} 张错题，准备生成 PDF`;
+            } else {
+                hintEl.innerText = `📄 未抓拍错题，将生成纯评价报告`;
+            }
+        }
+
+        /** 切换综合表现标签 */
+        function toggleArchiveTag(el) {
+            el.classList.toggle('selected');
+        }
+
+        /** 关闭归档弹窗 */
+        function closeArchiveModal() {
+            document.getElementById('archiveOverlay').classList.remove('show');
+            currentArchiveStudentId = null;
+            archivePhotos = [];
+        }
+
+        /**
+         * 提交报告：校验 → 写入 dailyReports → 刷新列表
+         */
+        function submitReport() {
+            const stu = students.find(s => s.id === currentArchiveStudentId);
+            if (!stu) return;
+
+            const isPerfect = document.getElementById('archiveOverlay').dataset.perfect === '1';
+
+            // 收集选中的表现标签
+            const selectedTags = [];
+            document.querySelectorAll('#archiveTagSelector .tag-option.selected').forEach(el => {
+                selectedTags.push(el.innerText.trim());
+            });
+
+            // 收集作业完成状态
+            const taskStatusArr = [];
+            document.querySelectorAll('.task-check-item').forEach(item => {
+                taskStatusArr.push({
+                    subject: item.querySelector('.task-check-text').innerText.split(' - ')[0],
+                    content: item.querySelector('.task-check-text').innerText.split(' - ').slice(1).join(' - '),
+                    done: item.dataset.done === 'true'
+                });
+            });
+
+            const comment = document.getElementById('archiveComment').value.trim();
+
+            // 写入本地 dailyReports
+            dailyReports.set(stu.id, {
+                tags: selectedTags,
+                comment: comment,
+                taskStatus: taskStatusArr,
+                photos: [...archivePhotos],
+                isPerfect: isPerfect
+            });
+
+            // 发送成功后，清除该学生的草稿缓存
+            draftPhotos.delete(stu.id);
+
+            console.log('[Submit] 报告已生成:', stu.name, dailyReports.get(stu.id));
+
+            closeArchiveModal();
+            showToast(`已推送给 ${stu.name} 的家长！`);
+            renderTab3List();
+        }
+
+        /**
+         * 修改已发报告（回填数据后重新打开弹窗）
+         */
+        function editReport(studentId) {
+            const report = dailyReports.get(studentId);
+            if (!report) return;
+
+            // 删除已有记录，使其回到 "未生成" 状态后重新归档
+            dailyReports.delete(studentId);
+            currentArchiveStudentId = studentId;
+            archivePhotos = [...report.photos];
+
+            openArchiveModal(report.isPerfect);
+
+            // 回填标签
+            document.querySelectorAll('#archiveTagSelector .tag-option').forEach(el => {
+                if (report.tags.includes(el.innerText.trim())) {
+                    el.classList.add('selected');
+                }
+            });
+
+            // 回填留言
+            document.getElementById('archiveComment').value = report.comment || '';
+        }
+
+        // ========== 通用工具函数 ==========
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 1500);
         }
 
-        // 查看学生档案
         function viewProfile(studentId, studentName) {
             window.location.href = `student_profile.html?id=${studentId}&name=${encodeURIComponent(studentName)}`;
         }
 
-        // 点击页面其他地方关闭菜单
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('context-menu');
             if (!e.target.closest('.status-container') && !e.target.closest('#context-menu')) {
@@ -833,9 +2586,62 @@
             }
         });
 
+        // ========== URL回调处理 (处理从相机页面返回的归档请求) ==========
+        function handleCameraCallback() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('from_camera') === '1') {
+                const studentId = parseInt(params.get('student_id'));
+                const isPerfect = params.get('is_perfect') === '1';
+                const photosDataStr = params.get('photos_data');
+                const mode = params.get('mode') || 'direct'; // draft 或 direct
+
+                // 解析照片数据
+                let parsedPhotos = [];
+                try {
+                    parsedPhotos = photosDataStr ? JSON.parse(decodeURIComponent(photosDataStr)) : [];
+                } catch (e) {
+                    console.error('照片数据解析失败', e);
+                }
+
+                if (studentId) {
+                    // 1. 切换到 Tab 3
+                    switchMainTab(3);
+
+                    if (mode === 'draft') {
+                        // 草稿模式：将照片存入草稿池，不弹窗
+                        draftPhotos.set(studentId, parsedPhotos);
+                        setTimeout(() => {
+                            renderTab3List();
+                            const stu = students.find(s => s.id === studentId);
+                            showToast(`已保存 ${parsedPhotos.length} 张草稿→${stu ? stu.name : ''}，稍后可补充评语发送`);
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }, 200);
+                    } else {
+                        // 直接模式：立即拉起归档弹窗（如"今日全对"场景）
+                        currentArchiveStudentId = studentId;
+                        archivePhotos = parsedPhotos;
+
+                        setTimeout(() => {
+                            openArchiveModal(isPerfect);
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }, 300);
+                    }
+                }
+            }
+        }
+
         // Init
+        seedMockData(); // 确保从一开始就有作业数据，供直接切到 Tab3 使用
+        seedTab3MockData();
         render();
 
+        // NOTE: 支持 URL 参数 ?tab=3 直接切换到指定 Tab（如从相机页返回时跳回错题Tab）
+        const initTab = urlParams.get('tab');
+        if (initTab) {
+            switchMainTab(parseInt(initTab));
+        }
+
+        handleCameraCallback();
     </script>
 </body>
 

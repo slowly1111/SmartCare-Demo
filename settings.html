@@ -670,6 +670,37 @@
             <div class="edit-avatar-btn" onclick="editProfile()">编辑</div>
         </div>
 
+        <!-- 员工管理 (Admin 可见) -->
+        <div class="class-list">
+            <div class="class-header">
+                <span class="class-title">👥 员工管理</span>
+                <span class="add-btn" onclick="showInviteCode()">+ 邀请老师</span>
+            </div>
+            <div class="class-card">
+                <div class="class-item">
+                    <div class="class-info">
+                        <div class="class-icon" style="background: #e6f7ff; font-size: 16px;">👑</div>
+                        <div>
+                            <div class="class-name">李老师 (我)</div>
+                            <div class="class-count">机构管理员 · 139****1111</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="class-item" id="staffWang">
+                    <div class="class-info">
+                        <div class="class-icon" style="background: #f5f5f5; font-size: 16px;">👩‍🏫</div>
+                        <div>
+                            <div class="class-name">王老师</div>
+                            <div class="class-count">普通老师 · 138****0001</div>
+                        </div>
+                    </div>
+                    <div class="class-actions">
+                        <div class="action-btn btn-delete" onclick="removeStaff()">删</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 班级管理 -->
         <div class="class-list">
             <div class="class-header">
@@ -685,7 +716,7 @@
         <div class="settings-group">
             <div class="group-title">机构信息</div>
             <div class="settings-card">
-                <div class="settings-item" onclick="editOrgName()">
+                <div class="settings-item" onclick="openOrgModal()">
                     <div class="item-left">
                         <div class="item-icon icon-blue">🏢</div>
                         <div>
@@ -709,6 +740,21 @@
                     <div class="item-right">
                         <span class="item-value">未设置</span>
                         <span class="arrow">›</span>
+                    </div>
+                </div>
+                <!-- 新增：邀请码生成条目 -->
+                <div class="settings-item" onclick="copyInviteCodeFromList()">
+                    <div class="item-left">
+                        <div class="item-icon icon-green">🤝</div>
+                        <div>
+                            <div class="item-text">机构邀请码</div>
+                            <div class="item-desc">分享给其他老师加入本机构</div>
+                        </div>
+                    </div>
+                    <div class="item-right">
+                        <span class="item-value copyable-value"
+                            style="color:var(--primary-color); font-weight:bold; padding: 4px 8px; background: rgba(7, 193, 96, 0.1); border-radius: 6px;">886622
+                            📄</span>
                     </div>
                 </div>
             </div>
@@ -801,7 +847,30 @@
 
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="closeOrgModal()">取消</button>
-                <button class="btn btn-save" onclick="saveOrgName()">保存</button>
+                <button class="btn btn-save" onclick="saveOrgName()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 邀请码共享弹窗 -->
+    <div class="modal-overlay" id="inviteCodeModal">
+        <div class="modal" style="text-align: center;">
+            <h3 class="modal-title" style="justify-content: center;">🤝 邀请普通老师加入</h3>
+
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                内部员工使用微信授权时<br>输入下方邀请码即可自动加入本机构
+            </p>
+
+            <div
+                style="background: #f6ffed; border: 1px dashed #b7eb8f; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                <div style="font-size: 32px; font-weight: 800; color: #52c41a; letter-spacing: 4px;" id="codeToCopy">
+                    886622</div>
+                <div style="font-size: 12px; color: #888; margin-top: 8px;">(机构唯一绑定凭证，请勿外泄)</div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeInviteCodeModal()">关闭</button>
+                <button class="btn btn-save" onclick="copyInviteCode()">一键复制邀请码</button>
             </div>
         </div>
     </div>
@@ -855,13 +924,30 @@
                 </div>
                 <div class="profile-readonly-tip">手机号不可修改，如需更换请重新注册</div>
             </div>
-
             <button class="profile-save-btn" onclick="saveProfile()">保存</button>
         </div>
     </div>
 
+    <!-- 删除员工确认弹窗 -->
+    <div class="modal-overlay" id="staffModal">
+        <div class="modal" style="text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 12px;">⚠️</div>
+            <h3 class="modal-title" style="justify-content: center; margin-bottom: 8px;">确认移除</h3>
+
+            <p style="font-size: 14px; color: #666; margin-bottom: 24px; line-height: 1.5;">
+                确定要将 "王老师" 移出本机构吗？<br>
+                <span style="color:red;">移除后该老师将无法查看任何学生及班级数据！</span>
+            </p>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeStaffModal()">取消</button>
+                <button class="btn btn-danger" onclick="confirmRemoveStaff()">确认移除</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 模拟班级数据
+        // --- 模拟数据 ---
         let classData = [
             { id: 'class_001', name: '一年级午托精选班', type: '午托', time: '11:30-14:00', count: 20, color: '#fff7e6' },
             { id: 'class_002', name: '三年级作业辅导班', type: '晚托', time: '16:30-20:00', count: 15, color: '#e6f7ff' },
@@ -985,16 +1071,40 @@
         // 确认删除
         function confirmDelete() {
             if (deletingClassId) {
-                const classItem = classData.find(c => c.id === deletingClassId);
-                classData = classData.filter(c => c.id !== deletingClassId);
-                renderClassList();
-                alert(`🗑️ 班级 "${classItem.name}" 已删除`);
+                const targetId = deletingClassId;
+                const classItem = classData.find(c => c.id === targetId);
+
+                // 找出列表中对应的包含该名字的 div 执行消失动画
+                const allItems = document.querySelectorAll('.class-item');
+                let targetNode = null;
+                allItems.forEach(item => {
+                    if (item.querySelector('.class-name') && item.querySelector('.class-name').textContent === classItem.name) {
+                        targetNode = item;
+                    }
+                });
+
+                if (targetNode) {
+                    targetNode.style.transition = "all 0.3s ease";
+                    targetNode.style.opacity = "0";
+                    targetNode.style.transform = "translateX(-20px)";
+
+                    setTimeout(() => {
+                        classData = classData.filter(c => c.id !== targetId);
+                        renderClassList();
+                        showToast(`🗑️ 班级 "${classItem.name}" 已删除`);
+                    }, 300);
+                } else {
+                    // Fallback
+                    classData = classData.filter(c => c.id !== targetId);
+                    renderClassList();
+                    showToast(`🗑️ 班级 "${classItem.name}" 已删除`);
+                }
             }
             closeDeleteModal();
         }
 
         // 编辑机构名称
-        function editOrgName() {
+        function openOrgModal() {
             document.getElementById('orgNameInput').value = orgName;
             document.getElementById('orgModal').classList.add('show');
         }
@@ -1018,6 +1128,57 @@
         // 编辑Logo
         function editOrgLogo() {
             alert('📷 上传Logo功能开发中...\n(Demo演示)');
+        }
+
+        // --- 邀请码相关逻辑 ---
+        function showInviteCode() {
+            document.getElementById('inviteCodeModal').classList.add('show');
+        }
+
+        function closeInviteCodeModal() {
+            document.getElementById('inviteCodeModal').classList.remove('show');
+        }
+
+        function copyInviteCode() {
+            const code = document.getElementById('codeToCopy').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast(`已成功复制邀请码: ${code}`);
+                closeInviteCodeModal();
+            }).catch(err => {
+                showToast('复制失败，请手动长按复制');
+            });
+        }
+
+        function copyInviteCodeFromList() {
+            const code = "886622";
+            navigator.clipboard.writeText(code).then(() => {
+                showToast(`已成功复制邀请码: ${code}`);
+            }).catch(err => {
+                showToast('复制失败，请手动长按复制');
+            });
+        }
+
+        function removeStaff() {
+            document.getElementById('staffModal').classList.add('show');
+        }
+
+        function closeStaffModal() {
+            document.getElementById('staffModal').classList.remove('show');
+        }
+
+        function confirmRemoveStaff() {
+            closeStaffModal();
+            showToast('已成功移除员工：王老师');
+            // 找到元素并设置高度消失动画，随后彻底移除 DOM
+            const staffNode = document.getElementById('staffWang');
+            if (staffNode) {
+                staffNode.style.transition = "all 0.3s ease";
+                staffNode.style.opacity = "0";
+                staffNode.style.transform = "translateX(-20px)";
+                setTimeout(() => {
+                    staffNode.remove();
+                }, 300);
+            }
         }
 
         // 编辑个人资料

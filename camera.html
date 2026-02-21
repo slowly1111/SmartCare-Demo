@@ -586,55 +586,16 @@
                 <!-- 中间：快门按钮 -->
                 <div class="shutter-btn" onclick="takePhoto()"></div>
 
-                <!-- 右侧：提交按钮 -->
+                <!-- 右侧：完成拍摄按钮（存草稿，不直接弹窗） -->
                 <button class="btn-submit" id="submitBtn" onclick="openArchiveModal('normal')">
-                    提交 (<span id="photoCount">0</span>)
+                    完成拍摄 (<span id="photoCount">0</span>)
                 </button>
             </div>
         </div>
 
     </div>
 
-    <!-- ========== 归档确认弹窗 ========== -->
-    <div class="modal-overlay" id="archiveModal" onclick="closeModalOnOverlay(event)">
-        <div class="archive-modal">
-            <div class="modal-header" id="modalHeader">
-                <h3 id="modalTitle">📦 确认归档</h3>
-                <span class="modal-close" onclick="closeArchiveModal()">×</span>
-            </div>
-
-            <div class="modal-body">
-                <!-- 今日表现标签 -->
-                <div class="feedback-section">
-                    <label>🏷️ 今日表现 (点选)</label>
-                    <div class="tags-container" id="tagsContainer">
-                        <div class="tag-item" onclick="toggleTag(this)" data-tag="书写工整">👍 书写工整</div>
-                        <div class="tag-item" onclick="toggleTag(this)" data-tag="速度快">⚡ 速度快</div>
-                        <div class="tag-item" onclick="toggleTag(this)" data-tag="思路清晰">🧠 思路清晰</div>
-                        <div class="tag-item" onclick="toggleTag(this)" data-tag="有点拖拉">🐢 有点拖拉</div>
-                        <div class="tag-item" onclick="toggleTag(this)" data-tag="需要鼓励">💪 需要鼓励</div>
-                    </div>
-                </div>
-
-                <!-- 老师留言 -->
-                <div class="feedback-section">
-                    <label>💬 老师留言 (选填)</label>
-                    <textarea class="comment-input" id="commentInput" placeholder="例如：今天背诵课文非常流利..."></textarea>
-                </div>
-
-                <!-- 文件信息 -->
-                <div class="file-info" id="fileInfo">
-                    <span class="icon">📄</span>
-                    <span id="fileInfoText">已拍摄 0 张作业</span>
-                </div>
-
-                <!-- 确认发送按钮 -->
-                <button class="modal-confirm-btn" id="confirmBtn" onclick="confirmArchive()">
-                    ✅ 确认发送给家长
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- ========== 已移除本页独立的归档确认弹窗，改为回传数据由 check-in.html 统一处理 ========== -->
 
     <script>
         // 获取URL参数
@@ -727,128 +688,32 @@
             }
         }
 
-        // ========== 归档弹窗 (双模式) ==========
+        // ========== 重构：跳转回主页并唤起归档弹窗 ==========
 
-        // 打开归档弹窗
+        // 点击提交归档 (带着数据回传)
         function openArchiveModal(type) {
-            archiveMode = type;
-
-            // 普通模式必须有照片
             if (type === 'normal' && photos.length === 0) {
                 showToast('请先拍摄作业照片');
                 return;
             }
 
-            const modal = document.getElementById('archiveModal');
-            const header = document.getElementById('modalHeader');
-            const title = document.getElementById('modalTitle');
-            const fileInfo = document.getElementById('fileInfo');
-            const fileInfoText = document.getElementById('fileInfoText');
-            const confirmBtn = document.getElementById('confirmBtn');
+            // 构造参数跳回 check-in.html
+            // 将照片数组（包含 url 和 subject）序列化为 JSON 字符串并进行 URL 编码
+            const photosDataStr = encodeURIComponent(JSON.stringify(photos));
 
-            // 重置表单状态
-            selectedTags = [];
-            document.querySelectorAll('.tag-item').forEach(tag => tag.classList.remove('active'));
-            document.getElementById('commentInput').value = '';
-
-            if (type === 'perfect') {
-                // === 全对模式 ===
-                header.className = 'modal-header perfect';
-                title.innerText = '🎉 确认全对归档';
-                fileInfo.className = 'file-info perfect';
-                fileInfoText.innerText = '✨ 今日无错题，将生成表扬卡';
-                confirmBtn.className = 'modal-confirm-btn perfect';
-                confirmBtn.innerText = '🎉 发送表扬给家长';
-
-                // 自动选中好评标签
-                const firstTag = document.querySelector('.tag-item');
-                if (firstTag) {
-                    firstTag.classList.add('active');
-                    selectedTags.push(firstTag.dataset.tag);
-                }
-            } else {
-                // === 普通模式 ===
-                header.className = 'modal-header normal';
-                title.innerText = '📦 确认错题归档';
-                fileInfo.className = 'file-info normal';
-                fileInfoText.innerText = `📄 已拍摄 ${photos.length} 张${currentSubject}作业，准备生成 PDF`;
-                confirmBtn.className = 'modal-confirm-btn normal';
-                confirmBtn.innerText = '✅ 确认发送给家长';
-            }
-
-            // 显示弹窗
-            modal.classList.add('show');
+            // NOTE: normal 模式 → mode=draft（存草稿不弹窗），perfect 模式 → mode=direct（直接弹窗）
+            const mode = type === 'perfect' ? 'direct' : 'draft';
+            window.location.href = `check-in.html?from_camera=1&mode=${mode}&student_id=${studentId}&is_perfect=${type === 'perfect' ? '1' : '0'}&photos_data=${photosDataStr}`;
         }
 
-        // 关闭归档弹窗
-        function closeArchiveModal() {
-            document.getElementById('archiveModal').classList.remove('show');
-        }
-
-        // 点击遮罩关闭
-        function closeModalOnOverlay(event) {
-            if (event.target.id === 'archiveModal') {
-                closeArchiveModal();
-            }
-        }
-
-        // 切换标签选中状态
-        function toggleTag(el) {
-            el.classList.toggle('active');
-            const tag = el.dataset.tag;
-
-            if (el.classList.contains('active')) {
-                selectedTags.push(tag);
-            } else {
-                selectedTags = selectedTags.filter(t => t !== tag);
-            }
-        }
-
-        // 确认归档
-        function confirmArchive() {
-            const comment = document.getElementById('commentInput').value.trim();
-
-            // 收集反馈数据
-            const feedbackData = {
-                studentId: studentId,
-                studentName: studentName,
-                subject: currentSubject,
-                archiveMode: archiveMode,
-                photoCount: archiveMode === 'perfect' ? 0 : photos.length,
-                isPerfect: archiveMode === 'perfect',
-                tags: selectedTags,
-                comment: comment || (archiveMode === 'perfect' ? '今日表现优秀，无错题归档' : ''),
-                timestamp: new Date().toISOString()
-            };
-
-            console.log('归档数据:', feedbackData);
-
-            // 关闭弹窗
-            closeArchiveModal();
-
-            // 模拟提交
-            if (archiveMode === 'perfect') {
-                showToast('🎉 已发送表扬卡给家长！');
-            } else {
-                showToast('📤 后台上传中...');
-            }
-
-            setTimeout(() => {
-                const tagStr = selectedTags.length > 0 ? selectedTags.join(',') : '';
-                const perfectFlag = archiveMode === 'perfect' ? '1' : '0';
-
-                window.location.href = `check-in.html?uploaded=${studentId}&count=${photos.length}&subject=${currentSubject}&tags=${encodeURIComponent(tagStr)}&perfect=${perfectFlag}`;
-            }, 1000);
-        }
-
-        // 返回
+        // 返回（回到错题Tab）
         function goBack() {
             if (photos.length > 0) {
                 if (confirm('已拍摄的照片将不会保存，确定返回吗？')) {
-                    history.back() || (window.location.href = 'check-in.html');
+                    window.location.href = 'check-in.html?tab=3';
                 }
             } else {
-                history.back() || (window.location.href = 'check-in.html');
+                window.location.href = 'check-in.html?tab=3';
             }
         }
 
